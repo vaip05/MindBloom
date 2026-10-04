@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bloom-bg: #f8f7f4;
+  --color-bloom-navy: #1a1c2e;
+  --color-bloom-muted: #6b7280;
+  --color-bloom-lavender: #949cf0;
+  --color-bloom-lavender-dark: #7b84e8;
+  --color-bloom-pink: #f9b4bc;
+  --color-bloom-pink-soft: #fde8eb;
+  --color-bloom-peach: #ffd4b8;
+  --color-bloom-peach-soft: #ffe8d6;
+  --color-bloom-yellow: #fde68a;
+  --color-bloom-yellow-soft: #fef3c7;
+  --color-bloom-green: #a7f3d0;
+  --color-bloom-green-soft: #d1fae5;
+  --color-bloom-blue: #bae6fd;
+  --color-bloom-blue-soft: #e0f2fe;
+  --color-bloom-border: #e8e6e1;
+  --color-bloom-card: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-bloom-bg);
+  color: var(--color-bloom-navy);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+@keyframes breathe-scale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out both;
+}
+
+.animate-breathe {
+  animation: breathe-scale 8s ease-in-out infinite;
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 3s ease-in-out infinite;
+}
