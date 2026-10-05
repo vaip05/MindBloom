@@ -12,16 +12,15 @@ Skip index creation until a teammate enables the matching feature.
 
 ## Mood & Stress Tracker (`/mood`)
 
-- [ ] Save mood check-ins to `moodEntries`
-- [ ] Save stress levels to `stressEntries`
-- [ ] Add validation + success/error messages
-- [ ] Create composite index: `uid` + `createdAt` (when queries are enabled)
+- [x] Save mood and stress check-ins together in each user's `moodEntries` subcollection
+- [x] Add validation + success/error messages
+- [x] Scope mood queries to `users/{uid}/moodEntries`
 
 ## Breath (`/breathe`)
 
 - [ ] Build guided 1-minute breathing exercise UI
-- [ ] Save completed sessions to `breathingSessions`
-- [ ] Create composite index: `uid` + `createdAt` (when queries are enabled)
+- [x] Save completed sessions to `users/{uid}/breathingSessions`
+- [x] Scope breathing queries to the signed-in user's subcollection
 
 ## Daily Reminders (`/reminders`)
 

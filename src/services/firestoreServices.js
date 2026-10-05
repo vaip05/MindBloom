@@ -1,9 +1,7 @@
 /**
- * Firestore helpers for future feature work.
- *
- * Currently used by auth/profile flows. Mood, stress, breathing, reminders,
- * suggestions, and progress queries are scaffolded here but not wired into
- * active pages yet — see TODOS.md.
+ * Firestore helpers for the authenticated user's profile and wellness data.
+ * Wellness records are stored in subcollections under users/{uid} so that
+ * every read and write is scoped to the signed-in user's document path.
  */
 import {
   addDoc,
@@ -16,7 +14,6 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  where,
   limit,
 } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from '../lib/firebase'
@@ -30,6 +27,10 @@ function requireDb() {
     )
   }
   return db
+}
+
+function userCollection(database, uid, collectionName) {
+  return collection(database, 'users', uid, collectionName)
 }
 
 function startOfDay(date = new Date()) {
@@ -100,52 +101,43 @@ export async function updateUserProfile(uid, data) {
   })
 }
 
-export async function saveMoodEntry(uid, { moodId, moodValue, note = '' }) {
+export async function saveMoodEntry(uid, { moodId, moodValue, stressLevel, note = '' }) {
   const database = requireDb()
   const entry = {
-    uid,
     moodId,
     moodValue,
+    stressLevel: Number(stressLevel),
     note,
     createdAt: serverTimestamp(),
     localDate: startOfDay().toISOString(),
   }
-  const ref = await addDoc(collection(database, 'moodEntries'), entry)
+  const ref = await addDoc(userCollection(database, uid, 'moodEntries'), entry)
   await refreshSuggestions(uid)
   return { id: ref.id, ...entry }
 }
 
-export async function saveStressEntry(uid, { stressLevel, note = '' }) {
+export async function saveBreathingSession(uid, {
+  exerciseType,
+  durationSeconds,
+  cyclesCompleted,
+  completed = true,
+}) {
   const database = requireDb()
   const entry = {
-    uid,
-    stressLevel,
-    note,
-    createdAt: serverTimestamp(),
-    localDate: startOfDay().toISOString(),
-  }
-  const ref = await addDoc(collection(database, 'stressEntries'), entry)
-  await refreshSuggestions(uid)
-  return { id: ref.id, ...entry }
-}
-
-export async function saveBreathingSession(uid, { durationSeconds, completed }) {
-  const database = requireDb()
-  const entry = {
-    uid,
+    exerciseType,
     durationSeconds,
+    cyclesCompleted,
     completed,
-    createdAt: serverTimestamp(),
+    completedAt: serverTimestamp(),
   }
-  const ref = await addDoc(collection(database, 'breathingSessions'), entry)
+  const ref = await addDoc(userCollection(database, uid, 'breathingSessions'), entry)
   return { id: ref.id, ...entry }
 }
 
 async function listByUser(collectionName, uid, max = 60) {
   const database = requireDb()
   const q = query(
-    collection(database, collectionName),
-    where('uid', '==', uid),
+    userCollection(database, uid, collectionName),
     orderBy('createdAt', 'desc'),
     limit(max),
   )
@@ -159,8 +151,8 @@ export async function getRecentMoodEntries(uid, days = 7) {
 }
 
 export async function getRecentStressEntries(uid, days = 7) {
-  const entries = await listByUser('stressEntries', uid)
-  return entries.filter((entry) => withinDays(entry, days)).reverse()
+  const entries = await listByUser('moodEntries', uid)
+  return entries.filter((entry) => entry.stressLevel != null && withinDays(entry, days)).reverse()
 }
 
 export async function getLatestMood(uid) {
@@ -169,8 +161,8 @@ export async function getLatestMood(uid) {
 }
 
 export async function getLatestStress(uid) {
-  const entries = await listByUser('stressEntries', uid, 1)
-  return entries[0] || null
+  const entries = await listByUser('moodEntries', uid)
+  return entries.find((entry) => entry.stressLevel != null) || null
 }
 
 export async function getBreathingSessions(uid, days = 30) {
@@ -190,7 +182,7 @@ export async function saveReminder(uid, reminder) {
   }
 
   if (reminder.id) {
-    const ref = doc(database, 'reminders', reminder.id)
+    const ref = doc(database, 'users', uid, 'reminders', reminder.id)
     await updateDoc(ref, {
       enabled: payload.enabled,
       time: payload.time,
@@ -200,7 +192,7 @@ export async function saveReminder(uid, reminder) {
     return { id: reminder.id, ...payload }
   }
 
-  const ref = await addDoc(collection(database, 'reminders'), payload)
+  const ref = await addDoc(userCollection(database, uid, 'reminders'), payload)
   return { id: ref.id, ...payload }
 }
 
@@ -216,7 +208,7 @@ export async function refreshSuggestions(uid) {
     stressLevel: stress?.stressLevel,
   })
 
-  const ref = doc(database, 'wellnessSuggestions', uid)
+  const ref = doc(database, 'users', uid, 'wellnessSuggestions', 'current')
   await setDoc(ref, {
     uid,
     suggestions,
@@ -230,7 +222,7 @@ export async function refreshSuggestions(uid) {
 
 export async function getSuggestions(uid) {
   const database = requireDb()
-  const snap = await getDoc(doc(database, 'wellnessSuggestions', uid))
+  const snap = await getDoc(doc(database, 'users', uid, 'wellnessSuggestions', 'current'))
   if (!snap.exists()) {
     return refreshSuggestions(uid)
   }

@@ -7,7 +7,7 @@ export default function Progress() {
       description="Visualize weekly mood and stress trends with Recharts once tracking data exists."
       accentClass="bg-white border border-bloom-border"
       todos={[
-        'Load moodEntries and stressEntries for the signed-in user.',
+        'Load moodEntries, including mood and stress values, for the signed-in user.',
         'Render weekly mood and stress charts with Recharts.',
         'Show empty states until the user has logged enough data.',
         'Create Firestore indexes for those queries when enabling this page.',
