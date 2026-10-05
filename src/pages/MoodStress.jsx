@@ -5,7 +5,7 @@ import Card from '../components/ui/Card'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import { useAuth } from '../context/AuthContext'
 import { getMoodById, MOODS, STRESS_LEVELS } from '../lib/constants'
-import { saveMoodEntry, saveStressEntry } from '../services/firestoreServices'
+import { saveMoodEntry } from '../services/firestoreServices'
 
 export default function MoodStress() {
   const { user } = useAuth()
@@ -43,17 +43,12 @@ export default function MoodStress() {
 
     try {
       const trimmedNote = note.trim()
-      await Promise.all([
-        saveMoodEntry(user.uid, {
-          moodId: selectedMood,
-          moodValue: selectedMoodMeta?.value ?? 0,
-          note: trimmedNote,
-        }),
-        saveStressEntry(user.uid, {
-          stressLevel: Number(stressLevel),
-          note: trimmedNote,
-        }),
-      ])
+      await saveMoodEntry(user.uid, {
+        moodId: selectedMood,
+        moodValue: selectedMoodMeta?.value ?? 0,
+        stressLevel: Number(stressLevel),
+        note: trimmedNote,
+      })
 
       setSuccess('Your mood and stress check-in was saved successfully.')
       setNote('')

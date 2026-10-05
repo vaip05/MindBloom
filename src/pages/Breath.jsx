@@ -3,6 +3,8 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import BreathingExercise from '../components/BreathingExercise'
 import { FlowerMark } from '../components/BrandLogo'
+import { useAuth } from '../context/AuthContext'
+import { saveBreathingSession } from '../services/firestoreServices'
 import {
   BREATHING_EXERCISES,
   describePattern,
@@ -12,15 +14,26 @@ import {
 } from '../lib/breathingExercises'
 
 export default function Breath() {
+  const { user } = useAuth()
   const [selectedId, setSelectedId] = useState(BREATHING_EXERCISES[0].id)
   // 'choose' → 'session' → 'complete'
   const [view, setView] = useState('choose')
   const [lastSession, setLastSession] = useState(null)
+  const [saveError, setSaveError] = useState('')
 
   const selected = getExerciseById(selectedId)
 
-  function handleComplete(session) {
-    // Sprint 2: save `session` to Firestore here (see saveBreathingSession).
+  async function handleComplete(session) {
+    setSaveError('')
+
+    if (user) {
+      try {
+        await saveBreathingSession(user.uid, session)
+      } catch (error) {
+        setSaveError(error?.message || 'The session finished, but it could not be saved.')
+      }
+    }
+
     setLastSession(session)
     setView('complete')
   }
@@ -114,6 +127,7 @@ export default function Breath() {
             You finished {selected.name}: {lastSession.cyclesCompleted} cycles in{' '}
             {formatDuration(lastSession.durationSeconds)}. Nice work.
           </p>
+          {saveError ? <p className="mt-3 text-sm text-red-600">{saveError}</p> : null}
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
             <Button onClick={() => setView('session')} className="min-w-48">
               Breathe again
