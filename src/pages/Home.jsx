@@ -61,13 +61,10 @@ export default function Home() {
             <p className="text-xs font-bold tracking-[0.18em] text-bloom-navy uppercase">
               Take a breath
             </p>
-            <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-bloom-lavender">
-              TODO · Coming soon
-            </span>
           </div>
           <h2 className="mt-2 text-2xl font-extrabold text-bloom-navy">Find a little calm</h2>
           <p className="mt-1 text-bloom-navy/75">
-            Guided breathing will be enabled by a future teammate.
+            A short guided breathing exercise, about a minute.
           </p>
           <div className="my-8 flex flex-1 items-center justify-center">
             <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/80">
@@ -75,8 +72,8 @@ export default function Home() {
             </div>
           </div>
           <Link to="/breathe">
-            <Button className="w-full" variant="secondary">
-              View breath page →
+            <Button className="w-full">
+              Start breathing →
             </Button>
           </Link>
         </Card>
