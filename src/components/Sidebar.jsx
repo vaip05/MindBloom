@@ -39,7 +39,7 @@ export default function Sidebar() {
             end={item.to === '/'}
             onClick={() => setOpen(false)}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+              `flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold transition ${
                 isActive
                   ? 'bg-bloom-pink-soft text-bloom-navy'
                   : 'text-bloom-navy/80 hover:bg-white/70'
@@ -58,7 +58,7 @@ export default function Sidebar() {
     <>
       <button
         type="button"
-        className="fixed top-4 left-4 z-40 rounded-full bg-white p-2.5 shadow-sm border border-bloom-border lg:hidden"
+        className="fixed top-4 left-4 z-40 rounded-md bg-white p-2.5 shadow-sm border border-bloom-border lg:hidden"
         onClick={() => setOpen(true)}
         aria-label="Open navigation"
       >

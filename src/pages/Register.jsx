@@ -66,9 +66,9 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <div className="rounded-[2rem] border border-bloom-border bg-white px-6 py-8 shadow-sm sm:px-8">
-        <h1 className="text-3xl font-extrabold text-bloom-navy">Create your account</h1>
-        <p className="mt-2 text-bloom-navy/80">Begin a calmer, brighter routine.</p>
+      <div className="rounded-md border border-bloom-border bg-white px-6 py-8 shadow-sm sm:px-8">
+        <h1 className="text-3xl font-extrabold text-bloom-navy">Create an account</h1>
+        <p className="mt-2 text-bloom-navy/80">Name, email, and a password of at least 6 characters.</p>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
           <ErrorMessage message={formError} />
@@ -131,14 +131,14 @@ export default function Register() {
           />
 
           <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? 'Creating account…' : 'Create account →'}
+            {submitting ? 'Creating account…' : 'Create account'}
           </Button>
         </form>
 
-        <div className="mt-6 rounded-2xl bg-bloom-blue-soft px-4 py-4 text-center text-sm text-bloom-navy">
+        <div className="mt-6 rounded-md bg-bloom-blue-soft px-4 py-4 text-center text-sm text-bloom-navy">
           Already have an account?{' '}
           <Link to="/login" className="font-bold text-bloom-lavender hover:underline">
-            Log in →
+            Sign in
           </Link>
         </div>
       </div>

@@ -4,7 +4,7 @@ export default function Reminders() {
   return (
     <ComingSoon
       title="Daily Reminders"
-      description="Let users set a daily wellness nudge using the Browser Notifications API."
+      description="A time and a short message, sent as a browser notification while this tab is open."
       accentClass="bg-bloom-yellow-soft"
       todos={[
         'Request notification permission and handle denied/granted states.',

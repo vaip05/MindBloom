@@ -4,7 +4,7 @@ export default function Progress() {
   return (
     <ComingSoon
       title="Progress Charts"
-      description="Visualize weekly mood and stress trends with Recharts once tracking data exists."
+      description="Mood and stress over the last week, once enough check-ins exist."
       accentClass="bg-white border border-bloom-border"
       todos={[
         'Load moodEntries, including mood and stress values, for the signed-in user.',
@@ -13,8 +13,8 @@ export default function Progress() {
         'Create Firestore indexes for those queries when enabling this page.',
       ]}
     >
-      <div className="mt-6 flex h-40 items-center justify-center rounded-3xl bg-bloom-bg text-sm text-bloom-muted">
-        Chart placeholder
+      <div className="mt-6 flex h-40 items-center justify-center rounded-md bg-bloom-bg text-sm text-bloom-muted">
+        Chart goes here
       </div>
     </ComingSoon>
   )

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "EB Garamond", "Iowan Old Style", Georgia, serif;
 
   --color-bloom-bg: #f8f7f4;
   --color-bloom-navy: #1a1c2e;

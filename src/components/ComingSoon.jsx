@@ -1,7 +1,7 @@
 import Card from './ui/Card'
 
 export default function ComingSoon({
-  eyebrow = 'Coming soon',
+        eyebrow = 'Not built yet',
   title,
   description,
   todos = [],
@@ -20,7 +20,7 @@ export default function ComingSoon({
 
       <Card className={`${accentClass} px-5 py-6 sm:px-6`}>
         <p className="text-sm font-semibold text-bloom-navy">
-          This page is a themed placeholder for a future group member to implement.
+          Nothing on this page is saved yet.
         </p>
         {todos.length > 0 ? (
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-bloom-navy/80">
