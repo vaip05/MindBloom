@@ -4,7 +4,7 @@ export default function Suggestions() {
   return (
     <ComingSoon
       title="Wellness Suggestions"
-      description="Show personalized calm tips based on the user’s latest mood and stress check-ins."
+      description="Tips based on the latest mood and stress check-in."
       accentClass="bg-bloom-peach-soft"
       todos={[
         'Generate suggestions from recent mood/stress data (see src/lib/suggestions.js).',

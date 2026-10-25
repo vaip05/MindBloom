@@ -129,9 +129,18 @@ export async function saveBreathingSession(uid, {
     cyclesCompleted,
     completed,
     completedAt: serverTimestamp(),
+    createdAt: serverTimestamp(),
   }
   const ref = await addDoc(userCollection(database, uid, 'breathingSessions'), entry)
   return { id: ref.id, ...entry }
+}
+
+export async function updateBreathingSession(uid, sessionId, data) {
+  const database = requireDb()
+  await updateDoc(doc(database, 'users', uid, 'breathingSessions', sessionId), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  })
 }
 
 async function listByUser(collectionName, uid, max = 60) {
@@ -166,8 +175,21 @@ export async function getLatestStress(uid) {
 }
 
 export async function getBreathingSessions(uid, days = 30) {
-  const entries = await listByUser('breathingSessions', uid)
-  return entries.filter((entry) => withinDays(entry, days))
+  const database = requireDb()
+  const q = query(
+    userCollection(database, uid, 'breathingSessions'),
+    orderBy('completedAt', 'desc'),
+    limit(20),
+  )
+  const snap = await getDocs(q)
+  const cutoff = daysAgo(days)
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((entry) => {
+      if (entry.completed === false) return false
+      const completedAt = toDate(entry.completedAt) || toDate(entry.createdAt)
+      return completedAt != null && completedAt >= cutoff
+    })
 }
 
 export async function saveReminder(uid, reminder) {

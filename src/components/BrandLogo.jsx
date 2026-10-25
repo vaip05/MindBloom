@@ -19,7 +19,7 @@ export default function BrandLogo({ compact = false, className = '' }) {
         </p>
         {!compact ? (
           <p className="mt-1 text-[0.65rem] font-semibold tracking-[0.14em] text-bloom-muted uppercase">
-            A calmer, brighter you
+            Mood, breath, reminders
           </p>
         ) : null}
       </div>

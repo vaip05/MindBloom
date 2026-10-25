@@ -39,7 +39,7 @@ export default function StressChart({ data, height = 260 }) {
 
   if (!hasData) {
     return (
-      <div className="flex h-[260px] items-center justify-center rounded-3xl bg-bloom-bg/60 text-sm text-bloom-muted">
+      <div className="flex h-[260px] items-center justify-center rounded-md bg-bloom-bg/60 text-sm text-bloom-muted">
         Log stress levels to unlock this chart.
       </div>
     )
