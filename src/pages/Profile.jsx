@@ -96,13 +96,13 @@ export default function Profile() {
       <header>
         <h1 className="text-3xl font-extrabold text-bloom-navy">Profile</h1>
         <p className="mt-2 max-w-2xl text-bloom-navy/80">
-          Choose a calm avatar, add a short note about yourself, and manage your account.
+          Name, emoji, and a short note. Saved on this account.
         </p>
       </header>
 
       <ErrorMessage message={error} />
       {message ? (
-        <div className="rounded-2xl border border-bloom-green bg-bloom-green-soft px-4 py-3 text-sm text-bloom-navy">
+        <div className="rounded-md border border-bloom-green bg-bloom-green-soft px-4 py-3 text-sm text-bloom-navy">
           {message}
         </div>
       ) : null}
@@ -124,14 +124,14 @@ export default function Profile() {
                   {displayName.trim() || 'Your name'}
                 </p>
                 <p className="mt-1 max-w-md text-sm text-bloom-muted">
-                  {bio.trim() || 'Add a short description so your profile feels more like you.'}
+                  {bio.trim() || 'No note yet.'}
                 </p>
               </div>
             </div>
 
             <div>
               <p className="mb-2 text-sm font-semibold text-bloom-navy">Avatar</p>
-              <p className="mb-3 text-sm text-bloom-muted">Pick an emoji that feels like you.</p>
+              <p className="mb-3 text-sm text-bloom-muted">Choose one.</p>
               <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
                 {PROFILE_AVATARS.map((emoji) => {
                   const selected = avatarEmoji === emoji
@@ -142,7 +142,7 @@ export default function Profile() {
                       onClick={() => setAvatarEmoji(emoji)}
                       aria-label={`Choose avatar ${emoji}`}
                       aria-pressed={selected}
-                      className={`flex h-12 w-full items-center justify-center rounded-2xl text-2xl transition ${
+                      className={`flex h-12 w-full items-center justify-center rounded-md text-2xl transition ${
                         selected
                           ? 'bg-bloom-lavender/20 ring-2 ring-bloom-lavender'
                           : 'bg-bloom-bg hover:bg-bloom-blue-soft'
@@ -171,9 +171,9 @@ export default function Profile() {
                 value={bio}
                 maxLength={BIO_MAX_LENGTH}
                 rows={4}
-                placeholder="A calm sentence about what brings you here…"
+                placeholder="A short note."
                 onChange={(e) => setBio(e.target.value)}
-                className="w-full rounded-2xl border border-bloom-border bg-white px-4 py-3 text-bloom-navy outline-none focus:border-bloom-lavender focus:ring-2 focus:ring-bloom-lavender/20"
+                className="w-full rounded-md border border-bloom-border bg-white px-4 py-3 text-bloom-navy outline-none focus:border-bloom-lavender focus:ring-2 focus:ring-bloom-lavender/20"
               />
               <span className="mt-1.5 block text-right text-xs text-bloom-muted">
                 {bio.length}/{BIO_MAX_LENGTH}
@@ -183,7 +183,7 @@ export default function Profile() {
             <Input id="email" label="Email" value={user.email || ''} disabled readOnly />
 
             <Button type="submit" disabled={saving}>
-              {saving ? 'Saving…' : 'Save profile →'}
+              {saving ? 'Saving…' : 'Save profile'}
             </Button>
           </form>
         )}
@@ -192,7 +192,7 @@ export default function Profile() {
       <Card className="bg-bloom-pink-soft px-5 py-6">
         <h2 className="text-xl font-extrabold">Sign out</h2>
         <p className="mt-1 text-sm text-bloom-navy/75">
-          You can sign back in anytime with the same email.
+          Sign back in later with the same email.
         </p>
         <Button className="mt-5" variant="secondary" onClick={handleLogout} disabled={loggingOut}>
           {loggingOut ? 'Signing out…' : 'Log out'}

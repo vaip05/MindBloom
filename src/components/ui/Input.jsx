@@ -16,7 +16,7 @@ export default function Input({
         </label>
       ) : null}
       <div
-        className={`flex items-center gap-3 rounded-2xl border bg-white px-4 py-3 transition focus-within:border-bloom-lavender focus-within:ring-2 focus-within:ring-bloom-lavender/20 ${
+        className={`flex items-center gap-3 rounded-md border bg-white px-4 py-3 transition focus-within:border-bloom-lavender focus-within:ring-2 focus-within:ring-bloom-lavender/20 ${
           error ? 'border-red-300' : 'border-bloom-border'
         }`}
       >

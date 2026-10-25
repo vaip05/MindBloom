@@ -7,7 +7,7 @@ export default function Button({
   ...props
 }) {
   const base =
-    'inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bloom-lavender disabled:cursor-not-allowed disabled:opacity-60'
+    'inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-base font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bloom-lavender disabled:cursor-not-allowed disabled:opacity-60'
 
   const variants = {
     primary: 'bg-bloom-lavender text-white hover:bg-bloom-lavender-dark',

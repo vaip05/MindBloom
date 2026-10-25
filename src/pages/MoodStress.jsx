@@ -25,17 +25,17 @@ export default function MoodStress() {
     setSuccess('')
 
     if (!user) {
-      setError('Please sign in before logging a check-in.')
+      setError('Sign in before saving a check-in.')
       return
     }
 
     if (!selectedMood) {
-      setError('Please choose how you are feeling today.')
+      setError('Choose a mood first.')
       return
     }
 
     if (!stressLevel || stressLevel < 1 || stressLevel > 5) {
-      setError('Please select a stress level from 1 to 5.')
+      setError('Set stress from 1 to 5.')
       return
     }
 
@@ -50,12 +50,12 @@ export default function MoodStress() {
         note: trimmedNote,
       })
 
-      setSuccess('Your mood and stress check-in was saved successfully.')
+      setSuccess('Check-in saved.')
       setNote('')
       setSelectedMood('')
       setStressLevel(3)
     } catch (submitError) {
-      setError(submitError?.message || 'Something went wrong while saving your check-in.')
+      setError(submitError?.message || 'Could not save this check-in.')
     } finally {
       setIsSaving(false)
     }
@@ -64,15 +64,15 @@ export default function MoodStress() {
   return (
     <div className="space-y-6 animate-fade-up">
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-bold uppercase tracking-[0.18em] text-bloom-lavender">Daily check-in</p>
-        <h1 className="text-3xl font-black text-bloom-navy">Mood & Stress Tracker</h1>
+        <p className="text-sm font-bold uppercase tracking-[0.18em] text-bloom-lavender">Check-in</p>
+        <h1 className="text-3xl font-black text-bloom-navy">Mood and stress</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="border border-bloom-border bg-white p-5 shadow-sm sm:p-6">
           <div className="mb-5">
-            <h2 className="text-xl font-extrabold text-bloom-navy">How are you feeling?</h2>
-            <p className="mt-1 text-sm text-bloom-muted">Pick the mood that best matches today.</p>
+            <h2 className="text-xl font-extrabold text-bloom-navy">Mood</h2>
+            <p className="mt-1 text-sm text-bloom-muted">Choose one of the five.</p>
           </div>
 
           <MoodSelector value={selectedMood} onChange={setSelectedMood} />
@@ -81,10 +81,10 @@ export default function MoodStress() {
         <Card className="border border-bloom-border bg-white p-5 shadow-sm sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-extrabold text-bloom-navy">Stress level</h2>
-              <p className="mt-1 text-sm text-bloom-muted">Rate your stress from 1 to 5.</p>
+              <h2 className="text-xl font-extrabold text-bloom-navy">Stress</h2>
+              <p className="mt-1 text-sm text-bloom-muted">1 is low. 5 is high.</p>
             </div>
-            <span className="rounded-full bg-bloom-blue-soft px-3 py-1 text-sm font-bold text-bloom-navy">
+            <span className="rounded-md bg-bloom-blue-soft px-3 py-1 text-sm font-bold text-bloom-navy">
               {currentStressLabel}
             </span>
           </div>
@@ -119,15 +119,15 @@ export default function MoodStress() {
             onChange={(event) => setNote(event.target.value)}
             rows={4}
             maxLength={240}
-            placeholder="Add a quick note about what is affecting your day..."
-            className="w-full resize-none rounded-2xl border border-bloom-border bg-bloom-bg px-4 py-3 text-bloom-navy outline-none transition focus:border-bloom-lavender focus:ring-2 focus:ring-bloom-lavender/20"
+            placeholder="Optional. What is going on."
+            className="w-full resize-none rounded-md border border-bloom-border bg-bloom-bg px-4 py-3 text-bloom-navy outline-none transition focus:border-bloom-lavender focus:ring-2 focus:ring-bloom-lavender/20"
           />
           <div className="mt-2 text-right text-xs font-semibold text-bloom-muted">{note.length}/240</div>
         </Card>
 
         <ErrorMessage message={error} />
         {success ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             {success}
           </div>
         ) : null}
@@ -139,7 +139,7 @@ export default function MoodStress() {
                 Selected mood: <strong className="text-bloom-navy">{selectedMoodMeta.emoji} {selectedMoodMeta.label}</strong>
               </span>
             ) : (
-              <span>Choose a mood to continue</span>
+              <span>Choose a mood before saving.</span>
             )}
           </div>
 
@@ -150,8 +150,11 @@ export default function MoodStress() {
       </form>
 
       {selectedMoodMeta ? (
-        <Card className="border border-bloom-border bg-gradient-to-br from-bloom-pink-soft via-white to-bloom-blue-soft p-5 shadow-sm">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-bloom-lavender">Current mood</p>
+        <Card
+          className="border border-bloom-border p-5 shadow-sm"
+          style={{ backgroundColor: selectedMoodMeta.soft }}
+        >
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-bloom-lavender">Selected</p>
           <div className="mt-3 flex items-center gap-3">
             <span className="text-4xl" aria-hidden="true">{selectedMoodMeta.emoji}</span>
             <div>
