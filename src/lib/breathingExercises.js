@@ -7,10 +7,10 @@ export const BREATHING_EXERCISES = [
   {
     id: 'box',
     name: 'Box Breathing',
-    description: 'Even four-count breathing to steady your mind and focus.',
+    description: 'In 4, hold 4, out 4, hold 4. Four cycles.',
     instructions: [
-      'Sit upright and relax your shoulders.',
-      'Breathe in and out through your nose.',
+      'Sit upright.',
+      'In and out through your nose.',
       'Follow the circle: in, hold, out, hold.',
     ],
     phases: [
@@ -24,11 +24,11 @@ export const BREATHING_EXERCISES = [
   {
     id: '4-7-8',
     name: '4-7-8 Breathing',
-    description: 'A long, slow exhale to help you unwind, especially before sleep.',
+    description: 'In 4, hold 7, out 8. Four cycles.',
     instructions: [
-      'Sit or lie down comfortably.',
-      'Breathe in quietly through your nose.',
-      'Hold gently, then breathe out slowly through your mouth.',
+      'Sit or lie down.',
+      'In through your nose.',
+      'Hold, then out slowly through your mouth.',
     ],
     phases: [
       { type: 'inhale', seconds: 4 },
@@ -40,11 +40,11 @@ export const BREATHING_EXERCISES = [
   {
     id: 'coherent',
     name: 'Coherent Breathing',
-    description: 'Slow, even breaths with no holds. A gentle place to start.',
+    description: 'In 5, out 5. Six cycles. No holds.',
     instructions: [
-      'Sit comfortably and soften your jaw.',
-      'Breathe through your nose if you can.',
-      'Match the length of each breath in and out.',
+      'Sit comfortably.',
+      'Use your nose if you can.',
+      'Keep the in-breath and out-breath the same length.',
     ],
     phases: [
       { type: 'inhale', seconds: 5 },

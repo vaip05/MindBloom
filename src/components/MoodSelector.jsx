@@ -10,7 +10,7 @@ export default function MoodSelector({ value, onChange }) {
             key={mood.id}
             type="button"
             onClick={() => onChange(mood.id)}
-            className={`flex flex-col items-center justify-center gap-2 rounded-3xl px-3 py-4 transition ${
+            className={`flex flex-col items-center justify-center gap-2 rounded-md px-3 py-4 transition ${
               selected
                 ? 'ring-2 ring-bloom-navy/20 scale-[1.02]'
                 : 'hover:scale-[1.02]'

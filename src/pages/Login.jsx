@@ -56,9 +56,9 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div className="rounded-[2rem] border border-bloom-border bg-white px-6 py-8 shadow-sm sm:px-8">
-        <h1 className="text-3xl font-extrabold text-bloom-navy">Welcome back</h1>
-        <p className="mt-2 text-bloom-navy/80">Take a moment for yourself.</p>
+      <div className="rounded-md border border-bloom-border bg-white px-6 py-8 shadow-sm sm:px-8">
+        <h1 className="text-3xl font-extrabold text-bloom-navy">Sign in</h1>
+        <p className="mt-2 text-bloom-navy/80">Use the email on your account.</p>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
           <ErrorMessage message={formError} />
@@ -98,7 +98,7 @@ export default function Login() {
           />
 
           <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? 'Signing in…' : 'Log in →'}
+            {submitting ? 'Signing in…' : 'Log in'}
           </Button>
 
           <p className="text-center">
@@ -122,10 +122,10 @@ export default function Login() {
           <div className="h-px flex-1 bg-bloom-border" />
         </div>
 
-        <div className="rounded-2xl bg-bloom-pink-soft px-4 py-4 text-center text-sm text-bloom-navy">
-          New to MindBloom?{' '}
+        <div className="rounded-md bg-bloom-pink-soft px-4 py-4 text-center text-sm text-bloom-navy">
+          No account yet?{' '}
           <Link to="/register" className="font-bold text-bloom-lavender hover:underline">
-            Create an account →
+            Create one
           </Link>
         </div>
       </div>

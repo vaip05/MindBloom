@@ -1,43 +1,48 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Home from './pages/Home'
-import MoodStress from './pages/MoodStress'
-import Breath from './pages/Breath'
-import Reminders from './pages/Reminders'
-import Suggestions from './pages/Suggestions'
-import Progress from './pages/Progress'
-import Profile from './pages/Profile'
+import LoadingSpinner from './components/ui/LoadingSpinner'
+
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Home = lazy(() => import('./pages/Home'))
+const MoodStress = lazy(() => import('./pages/MoodStress'))
+const Breath = lazy(() => import('./pages/Breath'))
+const Reminders = lazy(() => import('./pages/Reminders'))
+const Suggestions = lazy(() => import('./pages/Suggestions'))
+const Progress = lazy(() => import('./pages/Progress'))
+const Profile = lazy(() => import('./pages/Profile'))
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+        <Suspense fallback={<LoadingSpinner label="Loading page…" />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Home />} />
-            <Route path="mood" element={<MoodStress />} />
-            <Route path="breathe" element={<Breath />} />
-            <Route path="reminders" element={<Reminders />} />
-            <Route path="suggestions" element={<Suggestions />} />
-            <Route path="progress" element={<Progress />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Home />} />
+              <Route path="mood" element={<MoodStress />} />
+              <Route path="breathe" element={<Breath />} />
+              <Route path="reminders" element={<Reminders />} />
+              <Route path="suggestions" element={<Suggestions />} />
+              <Route path="progress" element={<Progress />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   )
