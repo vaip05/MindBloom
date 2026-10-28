@@ -77,19 +77,57 @@ export default function Breath() {
     if (!user) return
     const next = !session.goodSession
     setPendingSessionId(session.id)
+    const clearedReason = next ? session.goodSessionReason || '' : ''
     setSessions((current) =>
-      current.map((item) => (item.id === session.id ? { ...item, goodSession: next } : item)),
+      current.map((item) =>
+        item.id === session.id
+          ? { ...item, goodSession: next, goodSessionReason: clearedReason }
+          : item,
+      ),
     )
     try {
-      await updateBreathingSession(user.uid, session.id, { goodSession: next })
+      await updateBreathingSession(user.uid, session.id, {
+        goodSession: next,
+        goodSessionReason: clearedReason,
+      })
       setHistoryError('')
     } catch (error) {
       setSessions((current) =>
         current.map((item) =>
-          item.id === session.id ? { ...item, goodSession: Boolean(session.goodSession) } : item,
+          item.id === session.id
+            ? {
+                ...item,
+                goodSession: Boolean(session.goodSession),
+                goodSessionReason: session.goodSessionReason || '',
+              }
+            : item,
         ),
       )
       setHistoryError(error?.message || 'Could not update that session.')
+    } finally {
+      setPendingSessionId('')
+    }
+  }
+
+  async function handleSaveGoodReason(session, reason) {
+    if (!user || !session.goodSession) return
+    const goodSessionReason = reason.trim()
+    setPendingSessionId(session.id)
+    setSessions((current) =>
+      current.map((item) => (item.id === session.id ? { ...item, goodSessionReason } : item)),
+    )
+    try {
+      await updateBreathingSession(user.uid, session.id, { goodSessionReason })
+      setHistoryError('')
+    } catch (error) {
+      setSessions((current) =>
+        current.map((item) =>
+          item.id === session.id
+            ? { ...item, goodSessionReason: session.goodSessionReason || '' }
+            : item,
+        ),
+      )
+      setHistoryError(error?.message || 'Could not save why that session was good.')
     } finally {
       setPendingSessionId('')
     }
@@ -225,6 +263,7 @@ export default function Breath() {
           pendingSessionId={pendingSessionId}
           onRepeat={handleRepeat}
           onToggleGoodSession={handleToggleGoodSession}
+          onSaveGoodReason={handleSaveGoodReason}
         />
       ) : null}
     </div>

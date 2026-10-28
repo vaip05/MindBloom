@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   Bell,
+  BookOpen,
   ChartLine,
   Flower2,
   Heart,
@@ -21,6 +22,7 @@ const ICONS = {
   flower: Flower2,
   bell: Bell,
   sparkles: Sparkles,
+  book: BookOpen,
   chart: ChartLine,
   user: User,
 }
