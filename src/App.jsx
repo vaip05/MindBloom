@@ -12,6 +12,7 @@ const MoodStress = lazy(() => import('./pages/MoodStress'))
 const Breath = lazy(() => import('./pages/Breath'))
 const Reminders = lazy(() => import('./pages/Reminders'))
 const Suggestions = lazy(() => import('./pages/Suggestions'))
+const Journal = lazy(() => import('./pages/Journal'))
 const Progress = lazy(() => import('./pages/Progress'))
 const Profile = lazy(() => import('./pages/Profile'))
 
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="breathe" element={<Breath />} />
               <Route path="reminders" element={<Reminders />} />
               <Route path="suggestions" element={<Suggestions />} />
+              <Route path="journal" element={<Journal />} />
               <Route path="progress" element={<Progress />} />
               <Route path="profile" element={<Profile />} />
             </Route>

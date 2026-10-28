@@ -1,0 +1,17 @@
+export const JOURNAL_PROMPTS = [
+  'What felt a little lighter today?',
+  'What is one thing you want to set down?',
+  'Who or what made you feel safe recently?',
+  'What does your body need right now?',
+  'What are you proud of, even if it is small?',
+  'What thought keeps coming back?',
+  'Where did you feel most like yourself today?',
+  'What are you looking forward to, even a little?',
+  'What would make tomorrow kinder?',
+  'What can you forgive yourself for?',
+  'What sound, place, or texture felt comforting?',
+  'What would “enough” look like for the rest of today?',
+  'What are you grateful for that you usually skip?',
+  'What feeling have you been avoiding naming?',
+  'What kind sentence do you want to leave for tomorrow?',
+]

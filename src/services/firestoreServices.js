@@ -8,6 +8,7 @@ import {
   collection,
   doc,
   getDoc,
+  deleteDoc,
   getDocs,
   orderBy,
   query,
@@ -224,22 +225,61 @@ export async function getReminders(uid) {
 
 export async function refreshSuggestions(uid) {
   const database = requireDb()
-  const [mood, stress] = await Promise.all([getLatestMood(uid), getLatestStress(uid)])
+  const ref = doc(database, 'users', uid, 'wellnessSuggestions', 'current')
+  const [mood, stress, currentSnap] = await Promise.all([
+    getLatestMood(uid),
+    getLatestStress(uid),
+    getDoc(ref),
+  ])
+  const page = (currentSnap.data()?.page ?? 0) + 1
   const suggestions = buildSuggestions({
     moodId: mood?.moodId,
     stressLevel: stress?.stressLevel,
+    page,
   })
 
-  const ref = doc(database, 'users', uid, 'wellnessSuggestions', 'current')
   await setDoc(ref, {
     uid,
     suggestions,
+    page,
     basedOnMood: mood?.moodId || null,
-    basedOnStress: stress?.stressLevel || null,
+    basedOnStress: stress?.stressLevel ?? null,
     updatedAt: serverTimestamp(),
   })
 
   return suggestions
+}
+
+export async function saveJournalEntry(uid, { id, title, body, kind = 'free', prompt = '' }) {
+  const database = requireDb()
+  const trimmedPrompt = prompt.trim()
+  const payload = {
+    title:
+      title.trim() ||
+      (kind === 'prompt' ? trimmedPrompt.slice(0, 80) : '') ||
+      (kind === 'suggestion' ? 'From suggestions' : 'Untitled'),
+    body: body.trim(),
+    kind,
+    updatedAt: serverTimestamp(),
+  }
+  if (kind === 'prompt' && trimmedPrompt) payload.prompt = trimmedPrompt
+  if (id) {
+    await updateDoc(doc(database, 'users', uid, 'journalEntries', id), payload)
+    return { id, ...payload }
+  }
+  const ref = await addDoc(userCollection(database, uid, 'journalEntries'), {
+    ...payload,
+    createdAt: serverTimestamp(),
+  })
+  return { id: ref.id, ...payload }
+}
+
+export async function getJournalEntries(uid) {
+  return listByUser('journalEntries', uid, 40)
+}
+
+export async function deleteJournalEntry(uid, entryId) {
+  await deleteDoc(doc(requireDb(), 'users', uid, 'journalEntries', entryId))
 }
 
 export async function getSuggestions(uid) {

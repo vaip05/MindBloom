@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import MoodFace from '../components/MoodFace'
 import MoodChart, { buildWeeklyMoodData } from '../components/MoodChart'
 import StressChart, { buildWeeklyStressData } from '../components/StressChart'
 import Card from '../components/ui/Card'
@@ -90,7 +91,7 @@ export default function Progress() {
             <Card className="border border-bloom-border bg-white p-5 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-bloom-muted">Latest mood</p>
               <div className="mt-3 flex items-center gap-3">
-                <span className="text-3xl" aria-hidden="true">{latestMood?.emoji || '—'}</span>
+                {latestMood ? <MoodFace mood={latestMood} className="h-12 w-12" /> : <span className="text-3xl">—</span>}
                 <div>
                   <p className="font-extrabold text-bloom-navy">{latestMood?.label || 'No check-ins yet'}</p>
                   <p className="text-xs text-bloom-muted">{latestEntry ? formatEntryDate(latestEntry) : 'Your latest mood will show here'}</p>
@@ -156,7 +157,16 @@ export default function Progress() {
                       return (
                         <tr key={entry.id} className="border-b border-bloom-border/70 last:border-0">
                           <td className="whitespace-nowrap px-3 py-3 text-bloom-muted">{formatEntryDate(entry)}</td>
-                          <td className="px-3 py-3 font-semibold text-bloom-navy">{mood ? `${mood.emoji} ${mood.label}` : 'Unknown mood'}</td>
+                          <td className="px-3 py-3 font-semibold text-bloom-navy">
+                            {mood ? (
+                              <span className="inline-flex items-center gap-2">
+                                <MoodFace mood={mood} className="h-6 w-6" />
+                                {mood.label}
+                              </span>
+                            ) : (
+                              'Unknown mood'
+                            )}
+                          </td>
                           <td className="px-3 py-3 text-bloom-navy">{stress ? `${stress.value} · ${stress.label}` : '—'}</td>
                           <td className="max-w-[240px] truncate px-3 py-3 text-bloom-muted" title={entry.note || ''}>{entry.note || '—'}</td>
                         </tr>
