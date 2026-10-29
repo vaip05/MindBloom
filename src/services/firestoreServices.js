@@ -61,6 +61,7 @@ export async function ensureUserProfile(user, extras = {}) {
   const database = requireDb()
   const ref = doc(database, 'users', user.uid)
   const snap = await getDoc(ref)
+
   const payload = {
     uid: user.uid,
     email: user.email || '',
@@ -90,19 +91,27 @@ export async function ensureUserProfile(user, extras = {}) {
 export async function getUserProfile(uid) {
   const database = requireDb()
   const snap = await getDoc(doc(database, 'users', uid))
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null
+
+  return snap.exists()
+    ? { id: snap.id, ...snap.data() }
+    : null
 }
 
 export async function updateUserProfile(uid, data) {
   const database = requireDb()
+
   await updateDoc(doc(database, 'users', uid), {
     ...data,
     updatedAt: serverTimestamp(),
   })
 }
 
-export async function saveMoodEntry(uid, { moodId, moodValue, stressLevel, note = '' }) {
+export async function saveMoodEntry(
+  uid,
+  { moodId, moodValue, stressLevel, note = '' },
+) {
   const database = requireDb()
+
   const entry = {
     moodId,
     moodValue,
@@ -111,18 +120,28 @@ export async function saveMoodEntry(uid, { moodId, moodValue, stressLevel, note 
     createdAt: serverTimestamp(),
     localDate: startOfDay().toISOString(),
   }
-  const ref = await addDoc(userCollection(database, uid, 'moodEntries'), entry)
+
+  const ref = await addDoc(
+    userCollection(database, uid, 'moodEntries'),
+    entry,
+  )
+
   await refreshSuggestions(uid)
+
   return { id: ref.id, ...entry }
 }
 
-export async function saveBreathingSession(uid, {
-  exerciseType,
-  durationSeconds,
-  cyclesCompleted,
-  completed = true,
-}) {
+export async function saveBreathingSession(
+  uid,
+  {
+    exerciseType,
+    durationSeconds,
+    cyclesCompleted,
+    completed = true,
+  },
+) {
   const database = requireDb()
+
   const entry = {
     exerciseType,
     durationSeconds,
@@ -131,37 +150,61 @@ export async function saveBreathingSession(uid, {
     completedAt: serverTimestamp(),
     createdAt: serverTimestamp(),
   }
-  const ref = await addDoc(userCollection(database, uid, 'breathingSessions'), entry)
+
+  const ref = await addDoc(
+    userCollection(database, uid, 'breathingSessions'),
+    entry,
+  )
+
   return { id: ref.id, ...entry }
 }
 
 export async function updateBreathingSession(uid, sessionId, data) {
   const database = requireDb()
-  await updateDoc(doc(database, 'users', uid, 'breathingSessions', sessionId), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  })
+
+  await updateDoc(
+    doc(database, 'users', uid, 'breathingSessions', sessionId),
+    {
+      ...data,
+      updatedAt: serverTimestamp(),
+    },
+  )
 }
 
 async function listByUser(collectionName, uid, max = 60) {
   const database = requireDb()
+
   const q = query(
     userCollection(database, uid, collectionName),
     orderBy('createdAt', 'desc'),
     limit(max),
   )
+
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+
+  return snap.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
+  }))
 }
 
 export async function getRecentMoodEntries(uid, days = 7) {
   const entries = await listByUser('moodEntries', uid)
-  return entries.filter((entry) => withinDays(entry, days)).reverse()
+
+  return entries
+    .filter((entry) => withinDays(entry, days))
+    .reverse()
 }
 
 export async function getRecentStressEntries(uid, days = 7) {
   const entries = await listByUser('moodEntries', uid)
-  return entries.filter((entry) => entry.stressLevel != null && withinDays(entry, days)).reverse()
+
+  return entries
+    .filter(
+      (entry) =>
+        entry.stressLevel != null && withinDays(entry, days),
+    )
+    .reverse()
 }
 
 export async function getLatestMood(uid) {
@@ -171,51 +214,99 @@ export async function getLatestMood(uid) {
 
 export async function getLatestStress(uid) {
   const entries = await listByUser('moodEntries', uid)
-  return entries.find((entry) => entry.stressLevel != null) || null
+
+  return (
+    entries.find((entry) => entry.stressLevel != null) || null
+  )
 }
 
 export async function getBreathingSessions(uid, days = 30) {
   const database = requireDb()
+
   const q = query(
     userCollection(database, uid, 'breathingSessions'),
     orderBy('completedAt', 'desc'),
     limit(20),
   )
+
   const snap = await getDocs(q)
   const cutoff = daysAgo(days)
+
   return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
+    .map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }))
     .filter((entry) => {
       if (entry.completed === false) return false
-      const completedAt = toDate(entry.completedAt) || toDate(entry.createdAt)
+
+      const completedAt =
+        toDate(entry.completedAt) || toDate(entry.createdAt)
+
       return completedAt != null && completedAt >= cutoff
     })
 }
 
 export async function saveReminder(uid, reminder) {
   const database = requireDb()
-  const payload = {
-    uid,
+
+  const reminderData = {
     enabled: Boolean(reminder.enabled),
     time: reminder.time,
-    message: reminder.message || 'Take a moment for yourself.',
+    message:
+      reminder.message || 'Take a moment for yourself.',
+  }
+
+  // Also update the reminderDefaults fields inside the user document.
+  await setDoc(
+    doc(database, 'users', uid),
+    {
+      reminderDefaults: {
+        ...reminderData,
+        updatedAt: serverTimestamp(),
+      },
+    },
+    { merge: true },
+  )
+
+  const payload = {
+    uid,
+    ...reminderData,
     updatedAt: serverTimestamp(),
-    createdAt: serverTimestamp(),
   }
 
   if (reminder.id) {
-    const ref = doc(database, 'users', uid, 'reminders', reminder.id)
+    const ref = doc(
+      database,
+      'users',
+      uid,
+      'reminders',
+      reminder.id,
+    )
+
     await updateDoc(ref, {
-      enabled: payload.enabled,
-      time: payload.time,
-      message: payload.message,
+      ...reminderData,
       updatedAt: serverTimestamp(),
     })
-    return { id: reminder.id, ...payload }
+
+    return {
+      id: reminder.id,
+      ...payload,
+    }
   }
 
-  const ref = await addDoc(userCollection(database, uid, 'reminders'), payload)
-  return { id: ref.id, ...payload }
+  const ref = await addDoc(
+    userCollection(database, uid, 'reminders'),
+    {
+      ...payload,
+      createdAt: serverTimestamp(),
+    },
+  )
+
+  return {
+    id: ref.id,
+    ...payload,
+  }
 }
 
 export async function getReminders(uid) {
@@ -224,13 +315,25 @@ export async function getReminders(uid) {
 
 export async function refreshSuggestions(uid) {
   const database = requireDb()
-  const [mood, stress] = await Promise.all([getLatestMood(uid), getLatestStress(uid)])
+
+  const [mood, stress] = await Promise.all([
+    getLatestMood(uid),
+    getLatestStress(uid),
+  ])
+
   const suggestions = buildSuggestions({
     moodId: mood?.moodId,
     stressLevel: stress?.stressLevel,
   })
 
-  const ref = doc(database, 'users', uid, 'wellnessSuggestions', 'current')
+  const ref = doc(
+    database,
+    'users',
+    uid,
+    'wellnessSuggestions',
+    'current',
+  )
+
   await setDoc(ref, {
     uid,
     suggestions,
@@ -244,9 +347,14 @@ export async function refreshSuggestions(uid) {
 
 export async function getSuggestions(uid) {
   const database = requireDb()
-  const snap = await getDoc(doc(database, 'users', uid, 'wellnessSuggestions', 'current'))
+
+  const snap = await getDoc(
+    doc(database, 'users', uid, 'wellnessSuggestions', 'current'),
+  )
+
   if (!snap.exists()) {
     return refreshSuggestions(uid)
   }
+
   return snap.data().suggestions || []
 }
