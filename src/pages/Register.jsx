@@ -5,7 +5,7 @@ import AuthLayout from '../layouts/AuthLayout'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import ErrorMessage from '../components/ui/ErrorMessage'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 function validate(values) {
   const errors = {}

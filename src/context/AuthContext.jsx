@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -9,25 +9,21 @@ import {
 import { auth, isFirebaseConfigured } from '../lib/firebase'
 import { formatAuthError } from '../lib/constants'
 import { ensureUserProfile } from '../services/firestoreServices'
-
-const AuthContext = createContext(null)
+import AuthContext from './contextInstance'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [configError] = useState(
-    isFirebaseConfigured
-      ? null
-      : 'Firebase is not configured. Copy .env.example to .env and add your Firebase project keys.',
-  )
+  const [loading, setLoading] = useState(isFirebaseConfigured && Boolean(auth))
+  const configError = isFirebaseConfigured
+    ? null
+    : 'Firebase is not configured. Copy .env.example to .env and add your Firebase project keys.'
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
-      setLoading(false)
       return undefined
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser)
       setLoading(false)
     })
@@ -74,11 +70,5 @@ export function AuthProvider({ children }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
+// The useAuth hook lives in its own module to keep Fast Refresh boundaries clean.
 
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return ctx
-}

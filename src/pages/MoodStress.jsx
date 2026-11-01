@@ -3,11 +3,12 @@ import MoodSelector from '../components/MoodSelector'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import ErrorMessage from '../components/ui/ErrorMessage'
-import { useAuth } from '../context/AuthContext'
-import { getMoodById, MOODS, STRESS_LEVELS } from '../lib/constants'
+import { useAuth } from '../context/useAuth'
+import { getMoodById, STRESS_LEVELS } from '../lib/constants'
 import { saveMoodEntry } from '../services/firestoreServices'
 
 export default function MoodStress() {
+
   const { user } = useAuth()
   const [selectedMood, setSelectedMood] = useState('')
   const [stressLevel, setStressLevel] = useState(3)

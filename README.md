@@ -14,17 +14,18 @@ A calm mental wellness web app for mood and stress tracking, guided breathing, p
 
 ## Features
 
-**Live now**
+**Implemented**
 - Create an account, log in, and log out
 - Protected dashboard routes
 - Home dashboard layout + Profile
+- Mood and stress check-ins stored per user in Firestore
+- Guided breathing sessions
+- Mood and stress progress charts with recent check-in history
 
-**Themed placeholders (see `TODOS.md`)**
-- Mood & Stress Tracker
-- Breathing Exercises
+**Remaining work (see `TODOS.md`)**
 - Daily Reminders
 - Wellness Suggestions
-- Progress Charts
+- Sprint 3 release QA and production deployment
 
 
 ## Project structure

@@ -8,32 +8,6 @@ import {
   YAxis,
 } from 'recharts'
 
-function toDayLabel(date) {
-  return date.toLocaleDateString(undefined, { weekday: 'short' })
-}
-
-export function buildWeeklyStressData(entries = []) {
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    d.setDate(d.getDate() - (6 - i))
-    return d
-  })
-
-  return days.map((day) => {
-    const key = day.toDateString()
-    const dayEntries = entries.filter((entry) => {
-      const created = entry.createdAt?.toDate?.() || new Date(entry.createdAt || entry.localDate)
-      return created.toDateString() === key
-    })
-    const latest = dayEntries[dayEntries.length - 1]
-    return {
-      day: toDayLabel(day),
-      value: latest?.stressLevel ?? null,
-    }
-  })
-}
-
 export default function StressChart({ data, height = 260 }) {
   const hasData = data.some((d) => d.value != null)
 

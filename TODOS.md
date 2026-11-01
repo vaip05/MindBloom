@@ -1,12 +1,10 @@
 # MindBloom feature TODOs
 
-Auth, protected routes, Home layout, and Profile are in scope now.
-The items below are intentionally left as themed filler pages for future teammates.
+This document tracks implemented features and the remaining release work.
 
-## Do not create Firestore indexes yet
+## Firestore indexes
 
-Indexes are only needed when a page runs real Firestore queries.
-Skip index creation until a teammate enables the matching feature.
+The Progress page now runs real Firestore history queries. Confirm the required indexes are deployed to the production Firebase project before release.
 
 ---
 
@@ -18,7 +16,7 @@ Skip index creation until a teammate enables the matching feature.
 
 ## Breath (`/breathe`)
 
-- [ ] Build guided 1-minute breathing exercise UI
+- [x] Build guided breathing exercise UI
 - [x] Save completed sessions to `users/{uid}/breathingSessions`
 - [x] Scope breathing queries to the signed-in user's subcollection
 
@@ -37,9 +35,9 @@ Skip index creation until a teammate enables the matching feature.
 
 ## Progress Charts (`/progress`)
 
-- [ ] Fetch weekly mood + stress history
-- [ ] Render Recharts mood/stress charts
-- [ ] Handle empty states
+- [x] Fetch weekly mood + stress history
+- [x] Render Recharts mood/stress charts
+- [x] Handle empty states
 
 ## Home dashboard polish
 
@@ -58,3 +56,28 @@ Skip index creation until a teammate enables the matching feature.
 - `src/components/BreathingExercise.jsx`
 - `firestore.rules`
 - `firestore.indexes.json`
+
+## Sprint 3 — Release readiness
+
+### PBI-035: Final bug-fixing and quality-assurance pass
+
+- Priority: High
+- Owner: Xuhang Wu
+- Estimate: 8 points
+- [x] Run production build and lint; resolve blocking errors
+- [x] Verify login and registration screens render locally
+- [x] Verify an unauthenticated direct visit to `/progress` redirects to login
+- [ ] Test successful authentication, mood check-in, progress history, and logout with an authorized test account
+- [ ] Fix and retest high-priority defects
+- [ ] Record test results and any accepted known issues
+
+### PBI-036: Deploy and test the production version
+
+- Priority: High
+- Owner: Xuhang Wu
+- Estimate: 6 points
+- Deployment is currently blocked: Vercel CLI and a linked team project are not configured in this workspace.
+- [ ] Deploy the production build to the team hosting project
+- [ ] Confirm the production URL loads and client-side routes work after refresh
+- [ ] Verify production Firebase configuration, authentication, Firestore rules, and required indexes
+- [ ] Smoke-test the main user journeys in production and record the results

@@ -4,7 +4,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import ErrorMessage from '../components/ui/ErrorMessage'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import {
   BIO_MAX_LENGTH,
   DEFAULT_AVATAR,

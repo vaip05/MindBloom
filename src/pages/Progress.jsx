@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import MoodChart, { buildWeeklyMoodData } from '../components/MoodChart'
-import StressChart, { buildWeeklyStressData } from '../components/StressChart'
+import MoodChart from '../components/MoodChart'
+import StressChart from '../components/StressChart'
 import Card from '../components/ui/Card'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import { MOODS, STRESS_LEVELS } from '../lib/constants'
+import { buildWeeklyMoodData, buildWeeklyStressData } from '../lib/progress'
 import { getRecentMoodEntries } from '../services/firestoreServices'
 
 function getEntryDate(entry) {

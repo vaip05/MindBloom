@@ -4,7 +4,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import { getMoodById, STRESS_LEVELS } from '../lib/constants'
 import {
   getLatestMood,

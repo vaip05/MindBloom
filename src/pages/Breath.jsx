@@ -4,7 +4,7 @@ import Button from '../components/ui/Button'
 import BreathingExercise from '../components/BreathingExercise'
 import BreathingHistory from '../components/BreathingHistory'
 import { FlowerMark } from '../components/BrandLogo'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import {
   getBreathingSessions,
   saveBreathingSession,
