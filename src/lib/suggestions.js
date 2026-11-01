@@ -1,4 +1,4 @@
-import { getMoodById } from './constants'
+import { getMoodById, STRESS_LEVELS } from './constants'
 import { getExerciseById } from './breathingExercises'
 
 const ACTIONS = {
@@ -25,6 +25,21 @@ const LIBRARY = {
       body: 'Take a short walk outdoors to lock in this positive energy.',
       tag: 'Movement',
     },
+    {
+      title: 'Pass it on',
+      body: 'Tell someone one specific thing they did that helped you today.',
+      tag: 'Kindness',
+    },
+    {
+      title: 'Mark the moment',
+      body: 'Pause for ten seconds and notice where this good feeling sits in your body.',
+      tag: 'Awareness',
+    },
+    {
+      title: 'Leave a little light',
+      body: 'Set one small plan for tomorrow while this mood is still easy to remember.',
+      tag: 'Focus',
+    },
   ],
   good: [
     {
@@ -41,6 +56,21 @@ const LIBRARY = {
       title: 'One small win',
       body: 'Finish one tiny task you have been putting off to boost your sense of ease.',
       tag: 'Focus',
+    },
+    {
+      title: 'Step into daylight',
+      body: 'Stand by a window or go outside for a minute and let your eyes rest on something far away.',
+      tag: 'Movement',
+    },
+    {
+      title: 'Keep the thread',
+      body: 'Write one sentence about what is going well, so you can find it again later.',
+      tag: 'Gratitude',
+    },
+    {
+      title: 'Protect the ease',
+      body: 'Choose one thing you will not add to today.',
+      tag: 'Rest',
     },
   ],
   okay: [
@@ -60,6 +90,21 @@ const LIBRARY = {
       body: 'Quietly name what you are feeling without judging it. Naming often softens intensity.',
       tag: 'Awareness',
     },
+    {
+      title: 'Change the view',
+      body: 'Look out a window, or walk to another room, and name three things you had not noticed.',
+      tag: 'Grounding',
+    },
+    {
+      title: 'Unclench',
+      body: 'Drop your shoulders, unclench your jaw, and let the next exhale last a little longer.',
+      tag: 'Body',
+    },
+    {
+      title: 'One honest line',
+      body: 'Write a single sentence about how this moment actually feels.',
+      tag: 'Focus',
+    },
   ],
   'not-great': [
     {
@@ -76,6 +121,21 @@ const LIBRARY = {
       title: 'Kind pause',
       body: 'Step away from screens for a few minutes and place a hand on your chest.',
       tag: 'Rest',
+    },
+    {
+      title: 'Shrink the task',
+      body: 'Do only the first thirty seconds of the thing you are avoiding.',
+      tag: 'Focus',
+    },
+    {
+      title: 'Ask for a hand',
+      body: 'Send one message that says what you need, even if it is just company.',
+      tag: 'Connection',
+    },
+    {
+      title: 'Warm something',
+      body: 'Hold a warm mug or wash your hands in warm water and stay with that feeling.',
+      tag: 'Comfort',
     },
   ],
   tough: [
@@ -95,6 +155,22 @@ const LIBRARY = {
       body: 'Set a gentle reminder later today to check in with yourself again.',
       tag: 'Safety',
       action: ACTIONS.reminders,
+    },
+    {
+      title: 'Stay with one sense',
+      body: 'Pick one sound in the room and follow it for five breaths.',
+      tag: 'Grounding',
+    },
+    {
+      title: 'Make it smaller',
+      body: 'Lie down, dim a light, or step outside. Change one thing about where you are.',
+      tag: 'Rest',
+    },
+    {
+      title: 'A later check-in',
+      body: 'Look at your recent mood chart and notice you have moved through hard days before.',
+      tag: 'Progress',
+      action: ACTIONS.progress,
     },
   ],
   default: [
@@ -116,12 +192,29 @@ const LIBRARY = {
       tag: 'Reminder',
       action: ACTIONS.reminders,
     },
+    {
+      title: 'Notice the room',
+      body: 'Name one thing you can see, one you can hear, and one you can feel.',
+      tag: 'Grounding',
+    },
+    {
+      title: 'Drink some water',
+      body: 'Finish a glass of water before you decide what to do next.',
+      tag: 'Body',
+    },
+    {
+      title: 'Pick a time',
+      body: 'Choose a time today to come back and log how you feel.',
+      tag: 'Focus',
+      action: ACTIONS.mood,
+    },
   ],
 }
 
 const MAX_SUGGESTIONS = 4
 // Leave room for at least two tips from the mood library.
 const MAX_RULE_SUGGESTIONS = 2
+const LIBRARY_PAGE = 3
 const HIGH_STRESS = 4
 const LOW_STRESS = 2
 const LOW_MOOD = 2
@@ -132,6 +225,25 @@ function exerciseName(id) {
 
 function moodValueOf(entry) {
   return entry.moodValue ?? getMoodById(entry.moodId)?.value
+}
+
+function becauseMood({ mood, stressLevel }) {
+  const stress = STRESS_LEVELS.find((level) => level.value === Number(stressLevel))
+  if (mood && stress) {
+    return `Shown because your latest mood is ${mood.label} and stress is ${stress.label.toLowerCase()}.`
+  }
+  if (mood) return `Shown because your latest mood is ${mood.label}.`
+  return 'Shown because you have not logged a mood yet.'
+}
+
+const RULE_REASONS = {
+  'stress-pattern': 'Shown because several recent check-ins had high stress.',
+  'stress-high': 'Shown because your latest stress is high.',
+  'low-mood-streak': 'Shown because your last few moods have felt heavy.',
+  'mood-rising': 'Shown because your mood is higher than your recent average.',
+  'evening-wind-down': 'Shown because it is late and you seem unsettled.',
+  'breathe-nudge': 'Shown because you have not done a breathing exercise this week.',
+  'stress-low': 'Shown because your stress is low right now.',
 }
 
 /**
@@ -257,6 +369,7 @@ export function buildSuggestions({
   recentEntries = [],
   breathingSessions = null,
   now = new Date(),
+  page = 0,
 }) {
   const context = {
     mood: getMoodById(moodId),
@@ -273,16 +386,38 @@ export function buildSuggestions({
     if (usedGroups.has(rule.group)) continue
     const suggestion = rule.match(context)
     if (suggestion) {
-      suggestions.push(suggestion)
+      suggestions.push({
+        ...suggestion,
+        reason: suggestion.reason || RULE_REASONS[suggestion.id] || becauseMood(context),
+      })
       usedGroups.add(rule.group)
     }
   }
 
   const usedTags = new Set(suggestions.map((item) => item.tag))
   const base = LIBRARY[moodId] || LIBRARY.default
-  base.forEach((item, index) => {
-    if (suggestions.length >= MAX_SUGGESTIONS || usedTags.has(item.tag)) return
-    suggestions.push({ id: `${moodId || 'default'}-${index}`, ...item })
+  const pageCount = Math.max(1, Math.ceil(base.length / LIBRARY_PAGE))
+  const start = (Math.abs(page) % pageCount) * LIBRARY_PAGE
+  for (let index = start; index < start + LIBRARY_PAGE; index += 1) {
+    const item = base[index]
+    if (!item || suggestions.length >= MAX_SUGGESTIONS || usedTags.has(item.tag)) continue
+    suggestions.push({
+      id: `${moodId || 'default'}-${index}`,
+      ...item,
+      reason: item.reason || becauseMood(context),
+    })
+    usedTags.add(item.tag)
+  }
+
+  suggestions.push({
+    id: 'journal',
+    title: 'Write it in the notebook',
+    body: 'Open a page and put down what this mood feels like. Saved pages stay in Journaling.',
+    tag: 'Journal',
+    reason: context.mood
+      ? `Shown because writing can make this ${context.mood.label} mood easier to see.`
+      : 'Shown because a few written lines can make the day easier to see.',
+    action: { type: 'journal', label: 'Open notebook' },
   })
 
   return suggestions

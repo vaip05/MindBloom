@@ -9,6 +9,22 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function validJournal(data) {
+      return data.keys().hasOnly(['title', 'body', 'kind', 'prompt', 'createdAt', 'updatedAt'])
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 80
+        && data.body is string
+        && data.body.size() > 0
+        && data.body.size() <= 4000
+        && data.kind in ['suggestion', 'free', 'prompt']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && (data.kind == 'prompt'
+          ? data.prompt is string && data.prompt.size() > 0 && data.prompt.size() <= 200
+          : !data.keys().hasAny(['prompt']));
+    }
+
     match /users/{userId} {
       allow read, write: if isOwner(userId);
 
@@ -26,6 +42,12 @@ service cloud.firestore {
 
       match /wellnessSuggestions/{suggestionId} {
         allow read, write: if isOwner(userId);
+      }
+
+      match /journalEntries/{entryId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && validJournal(request.resource.data);
+        allow delete: if isOwner(userId);
       }
     }
   }

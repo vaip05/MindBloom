@@ -1,3 +1,4 @@
+import MoodFace from './MoodFace'
 import { MOODS } from '../lib/constants'
 
 export default function MoodSelector({ value, onChange }) {
@@ -18,9 +19,7 @@ export default function MoodSelector({ value, onChange }) {
             style={{ backgroundColor: mood.color }}
             aria-pressed={selected}
           >
-            <span className="text-3xl" aria-hidden="true">
-              {mood.emoji}
-            </span>
+            <MoodFace mood={mood} className="h-12 w-12" />
             <span className="text-sm font-bold text-bloom-navy">{mood.label}</span>
           </button>
         )

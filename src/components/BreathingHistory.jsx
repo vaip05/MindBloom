@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ErrorMessage from './ui/ErrorMessage'
 import { BREATHING_EXERCISES, formatDuration, getExerciseById } from '../lib/breathingExercises'
 
@@ -34,12 +34,57 @@ function formatWhen(date) {
   })
 }
 
+function GoodSessionReason({ session, pending, onSave }) {
+  const [reason, setReason] = useState(session.goodSessionReason || '')
+
+  useEffect(() => {
+    setReason(session.goodSessionReason || '')
+  }, [session.goodSessionReason])
+
+  const saved = (session.goodSessionReason || '').trim()
+  const changed = reason.trim() !== saved
+
+  return (
+    <form
+      className="mt-3"
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (!changed || pending) return
+        onSave?.(session, reason)
+      }}
+    >
+      <label className="block text-sm font-semibold text-bloom-navy" htmlFor={`good-reason-${session.id}`}>
+        Why was this good?
+        <textarea
+          id={`good-reason-${session.id}`}
+          value={reason}
+          maxLength={280}
+          rows={2}
+          placeholder="A sentence about what made this session good."
+          onChange={(event) => setReason(event.target.value)}
+          className="mt-1 block w-full resize-none rounded-md border border-bloom-border bg-white px-3 py-2 text-sm font-medium text-bloom-navy outline-none focus:border-bloom-lavender"
+        />
+      </label>
+      {changed ? (
+        <button
+          type="submit"
+          disabled={pending}
+          className="mt-2 rounded-md bg-white px-4 py-2 text-sm font-bold text-bloom-navy border border-bloom-border disabled:opacity-60"
+        >
+          Save reason
+        </button>
+      ) : null}
+    </form>
+  )
+}
+
 export default function BreathingHistory({
   sessions,
   loading,
   error,
   onRepeat,
   onToggleGoodSession,
+  onSaveGoodReason,
   pendingSessionId,
 }) {
   const [exerciseFilter, setExerciseFilter] = useState('all')
@@ -152,8 +197,9 @@ export default function BreathingHistory({
             return (
               <li
                 key={session.id}
-                className="flex flex-col gap-3 rounded-md bg-bloom-blue-soft px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                className="rounded-md bg-bloom-blue-soft px-4 py-4"
               >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-extrabold text-bloom-navy">{name}</p>
                   <p className="mt-1 text-sm text-bloom-navy/75">
@@ -185,6 +231,14 @@ export default function BreathingHistory({
                     </button>
                   ) : null}
                 </div>
+                </div>
+                {marked ? (
+                  <GoodSessionReason
+                    session={session}
+                    pending={pending}
+                    onSave={onSaveGoodReason}
+                  />
+                ) : null}
               </li>
             )
           })}

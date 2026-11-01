@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import MoodFace from '../components/MoodFace'
 import MoodSelector from '../components/MoodSelector'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import { useAuth } from '../context/AuthContext'
-import { getMoodById, MOODS, STRESS_LEVELS } from '../lib/constants'
+import { getMoodById, STRESS_LEVELS } from '../lib/constants'
 import { saveMoodEntry } from '../services/firestoreServices'
 
 export default function MoodStress() {
@@ -136,7 +137,11 @@ export default function MoodStress() {
           <div className="text-sm text-bloom-muted">
             {selectedMoodMeta ? (
               <span>
-                Selected mood: <strong className="text-bloom-navy">{selectedMoodMeta.emoji} {selectedMoodMeta.label}</strong>
+                Selected mood:{' '}
+                <strong className="inline-flex items-center gap-1 text-bloom-navy">
+                  <MoodFace mood={selectedMoodMeta} className="h-5 w-5" />
+                  {selectedMoodMeta.label}
+                </strong>
               </span>
             ) : (
               <span>Choose a mood before saving.</span>
@@ -156,7 +161,7 @@ export default function MoodStress() {
         >
           <p className="text-sm font-bold uppercase tracking-[0.18em] text-bloom-lavender">Selected</p>
           <div className="mt-3 flex items-center gap-3">
-            <span className="text-4xl" aria-hidden="true">{selectedMoodMeta.emoji}</span>
+            <MoodFace mood={selectedMoodMeta} className="h-14 w-14" />
             <div>
               <p className="text-xl font-extrabold text-bloom-navy">{selectedMoodMeta.label}</p>
               <p className="text-sm text-bloom-muted">Stress: {currentStressLabel}</p>

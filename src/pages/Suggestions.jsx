@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import ErrorMessage from '../components/ui/ErrorMessage'
+import JournalNotebook from '../components/JournalNotebook'
+import MoodFace from '../components/MoodFace'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { useAuth } from '../context/AuthContext'
 import { getMoodById, STRESS_LEVELS } from '../lib/constants'
@@ -21,6 +23,7 @@ export default function Suggestions() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const [notebookOpen, setNotebookOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -64,6 +67,24 @@ export default function Suggestions() {
   const stressLabel = STRESS_LEVELS.find(
     (level) => level.value === latestStress?.stressLevel,
   )?.label
+  const fallbackReason = mood
+    ? `Shown because your latest mood is ${mood.label}${stressLabel ? ` and stress is ${stressLabel.toLowerCase()}` : ''}.`
+    : 'Shown because you have not logged a mood yet.'
+  const visibleSuggestions = suggestions.some((item) => item.action?.type === 'journal')
+    ? suggestions
+    : [
+        ...suggestions,
+        {
+          id: 'journal',
+          title: 'Write it in the notebook',
+          body: 'Open a page and put down what this mood feels like. Saved pages stay in Journaling.',
+          tag: 'Journal',
+          reason: mood
+            ? `Shown because writing can make this ${mood.label} mood easier to see.`
+            : 'Shown because a few written lines can make the day easier to see.',
+          action: { type: 'journal', label: 'Open notebook' },
+        },
+      ]
 
   return (
     <div className="space-y-6">
@@ -87,8 +108,9 @@ export default function Suggestions() {
                 Based on
               </p>
               {mood ? (
-                <p className="mt-2 text-lg font-extrabold text-bloom-navy">
-                  {mood.emoji} {mood.label}
+                <p className="mt-2 flex items-center gap-2 text-lg font-extrabold text-bloom-navy">
+                  <MoodFace mood={mood} className="h-7 w-7" />
+                  {mood.label}
                   {stressLabel ? ` · ${stressLabel} stress` : ''}
                 </p>
               ) : (
@@ -113,7 +135,7 @@ export default function Suggestions() {
           <ErrorMessage message={error} />
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {suggestions.map((item) => (
+            {visibleSuggestions.map((item) => (
               <Card
                 key={item.id}
                 className="flex flex-col border border-bloom-border bg-white p-5 shadow-sm sm:p-6"
@@ -122,8 +144,15 @@ export default function Suggestions() {
                   {item.tag}
                 </span>
                 <h2 className="mt-3 text-xl font-extrabold text-bloom-navy">{item.title}</h2>
-                <p className="mt-1 flex-1 text-sm text-bloom-navy/75">{item.body}</p>
-                {item.action ? (
+                <p className="mt-1 text-sm font-semibold text-bloom-lavender">
+                  {item.reason || fallbackReason}
+                </p>
+                <p className="mt-2 flex-1 text-sm text-bloom-navy/75">{item.body}</p>
+                {item.action?.type === 'journal' ? (
+                  <Button className="mt-5 w-full" onClick={() => setNotebookOpen(true)}>
+                    {item.action.label}
+                  </Button>
+                ) : item.action ? (
                   <Link to={item.action.to} className="mt-5">
                     <Button variant="secondary" className="w-full">
                       {item.action.label} →
@@ -133,6 +162,9 @@ export default function Suggestions() {
               </Card>
             ))}
           </div>
+          {notebookOpen ? (
+            <JournalNotebook kind="suggestion" onClose={() => setNotebookOpen(false)} />
+          ) : null}
         </>
       )}
     </div>
