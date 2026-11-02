@@ -41,6 +41,7 @@ const LIBRARY = {
       tag: 'Focus',
     },
   ],
+
   good: [
     {
       title: 'Gentle stretch',
@@ -73,6 +74,7 @@ const LIBRARY = {
       tag: 'Rest',
     },
   ],
+
   okay: [
     {
       title: 'Reset with breath',
@@ -106,6 +108,7 @@ const LIBRARY = {
       tag: 'Focus',
     },
   ],
+
   'not-great': [
     {
       title: 'Lower the load',
@@ -138,6 +141,7 @@ const LIBRARY = {
       tag: 'Comfort',
     },
   ],
+
   tough: [
     {
       title: 'You are not alone',
@@ -173,6 +177,7 @@ const LIBRARY = {
       action: ACTIONS.progress,
     },
   ],
+
   default: [
     {
       title: 'Start with a check-in',
@@ -212,7 +217,6 @@ const LIBRARY = {
 }
 
 const MAX_SUGGESTIONS = 4
-// Leave room for at least two tips from the mood library.
 const MAX_RULE_SUGGESTIONS = 2
 const LIBRARY_PAGE = 3
 const HIGH_STRESS = 4
@@ -227,65 +231,119 @@ function moodValueOf(entry) {
   return entry.moodValue ?? getMoodById(entry.moodId)?.value
 }
 
-function becauseMood({ mood, stressLevel }) {
-  const stress = STRESS_LEVELS.find((level) => level.value === Number(stressLevel))
+function becauseMood({ mood, stressLevel, averages }) {
+  const dailyMood = averages?.daily?.mood
+  const dailyStress = averages?.daily?.stress
+
+  if (dailyMood != null && dailyStress != null) {
+    return `Shown because today's average mood is ${dailyMood.toFixed(1)} and average stress is ${dailyStress.toFixed(1)}.`
+  }
+
+  const stress = STRESS_LEVELS.find(
+    (level) => level.value === Number(stressLevel),
+  )
+
   if (mood && stress) {
     return `Shown because your latest mood is ${mood.label} and stress is ${stress.label.toLowerCase()}.`
   }
-  if (mood) return `Shown because your latest mood is ${mood.label}.`
+
+  if (mood) {
+    return `Shown because your latest mood is ${mood.label}.`
+  }
+
   return 'Shown because you have not logged a mood yet.'
 }
 
 const RULE_REASONS = {
-  'stress-pattern': 'Shown because several recent check-ins had high stress.',
-  'stress-high': 'Shown because your latest stress is high.',
-  'low-mood-streak': 'Shown because your last few moods have felt heavy.',
-  'mood-rising': 'Shown because your mood is higher than your recent average.',
+  'stress-pattern': 'Shown because your weekly average stress is high.',
+  'stress-high': 'Shown because your daily average stress is high.',
+  'low-mood-streak': 'Shown because your weekly average mood is low.',
+  'mood-rising': 'Shown because today’s average mood is higher than your weekly average.',
   'evening-wind-down': 'Shown because it is late and you seem unsettled.',
   'breathe-nudge': 'Shown because you have not done a breathing exercise this week.',
-  'stress-low': 'Shown because your stress is low right now.',
+  'stress-low': 'Shown because your daily average stress is low.',
 }
 
-/**
- * Personalized rules, highest priority first. Each one looks at the user's
- * data and returns a suggestion, or null when it does not apply.
- * Rules in the same `group` cover the same topic, so only the first match is kept.
- */
 const RULES = [
   {
     group: 'stress',
-    match: ({ recentEntries }) => {
-      const stressful = recentEntries.filter((entry) => entry.stressLevel >= HIGH_STRESS).length
-      if (stressful < 3) return null
+
+    match: ({ recentEntries, averages }) => {
+      const stressfulEntries = recentEntries.filter(
+        (entry) => entry.stressLevel >= HIGH_STRESS,
+      ).length
+
+      const weeklyStress = averages?.weekly?.stress
+
+      const hasWeeklyStressPattern =
+        weeklyStress != null &&
+        averages.weekly.count >= 3 &&
+        weeklyStress >= HIGH_STRESS
+
+      if (!hasWeeklyStressPattern && stressfulEntries < 3) {
+        return null
+      }
+
+      const stressDescription = hasWeeklyStressPattern
+        ? `${weeklyStress.toFixed(1)} average stress this week`
+        : `${stressfulEntries} of your recent check-ins had high stress`
+
       return {
         id: 'stress-pattern',
         title: 'Stress keeps showing up',
-        body: `${stressful} of your recent check-ins had high stress. A daily ${exerciseName('box')} session can give your week a steady reset.`,
+        body: `${stressDescription}. A daily ${exerciseName('box')} session can give your week a steady reset.`,
         tag: 'Stress',
         action: ACTIONS.breathe,
       }
     },
   },
+
   {
     group: 'stress',
-    match: ({ stressLevel }) =>
-      stressLevel >= HIGH_STRESS
+
+    match: ({ stressLevel, averages }) => {
+      const dailyStress = averages?.daily?.stress ?? stressLevel
+
+      return dailyStress >= HIGH_STRESS
         ? {
             id: 'stress-high',
             title: 'Ease the pressure',
-            body: `Your stress looks elevated. Try ${exerciseName('box')} or a short break before the next task.`,
+            body: `Your daily average stress is elevated. Try ${exerciseName('box')} or a short break before the next task.`,
             tag: 'Stress',
             action: ACTIONS.breathe,
           }
-        : null,
+        : null
+    },
   },
+
   {
     group: 'mood',
-    match: ({ recentEntries }) => {
+
+    match: ({ recentEntries, averages }) => {
+      const weeklyMood = averages?.weekly?.mood
+
+      if (
+        weeklyMood != null &&
+        averages.weekly.count >= 3 &&
+        weeklyMood <= LOW_MOOD
+      ) {
+        return {
+          id: 'low-mood-streak',
+          title: 'Be gentle with yourself',
+          body: `Your weekly average mood is ${weeklyMood.toFixed(1)}. Consider reaching out to someone you trust. You do not have to carry it alone.`,
+          tag: 'Care',
+        }
+      }
+
       const lastThree = recentEntries.slice(-3)
-      if (lastThree.length < 3 || !lastThree.every((entry) => moodValueOf(entry) <= LOW_MOOD)) {
+
+      if (
+        lastThree.length < 3 ||
+        !lastThree.every((entry) => moodValueOf(entry) <= LOW_MOOD)
+      ) {
         return null
       }
+
       return {
         id: 'low-mood-streak',
         title: 'Be gentle with yourself',
@@ -294,15 +352,44 @@ const RULES = [
       }
     },
   },
+
   {
     group: 'mood',
-    match: ({ recentEntries }) => {
-      if (recentEntries.length < 3) return null
+
+    match: ({ recentEntries, averages }) => {
+      const dailyMood = averages?.daily?.mood
+      const weeklyMood = averages?.weekly?.mood
+
+      if (
+        dailyMood != null &&
+        weeklyMood != null &&
+        averages.weekly.count >= 3 &&
+        dailyMood - weeklyMood >= 0.75
+      ) {
+        return {
+          id: 'mood-rising',
+          title: 'Things are looking up',
+          body: `Today's average mood is ${dailyMood.toFixed(1)}, higher than your weekly average of ${weeklyMood.toFixed(1)}. Notice what helped and keep it in your routine.`,
+          tag: 'Progress',
+          action: ACTIONS.progress,
+        }
+      }
+
+      if (recentEntries.length < 3) {
+        return null
+      }
+
       const values = recentEntries.map(moodValueOf).filter(Boolean)
       const latest = values.at(-1)
       const earlier = values.slice(0, -1)
-      const average = earlier.reduce((sum, value) => sum + value, 0) / earlier.length
-      if (!latest || latest - average < 1) return null
+
+      const average =
+        earlier.reduce((sum, value) => sum + value, 0) / earlier.length
+
+      if (!latest || latest - average < 1) {
+        return null
+      }
+
       return {
         id: 'mood-rising',
         title: 'Things are looking up',
@@ -312,12 +399,20 @@ const RULES = [
       }
     },
   },
+
   {
     group: 'time',
-    match: ({ mood, stressLevel, now }) => {
+
+    match: ({ mood, stressLevel, averages, now }) => {
       const evening = now.getHours() >= 20
-      const unsettled = stressLevel >= 3 || (mood && mood.value <= 3)
-      if (!evening || !unsettled) return null
+      const dailyStress = averages?.daily?.stress ?? stressLevel
+      const dailyMood = averages?.daily?.mood ?? mood?.value
+      const unsettled = dailyStress >= 3 || (dailyMood && dailyMood <= 3)
+
+      if (!evening || !unsettled) {
+        return null
+      }
+
       return {
         id: 'evening-wind-down',
         title: 'Wind down for sleep',
@@ -327,9 +422,10 @@ const RULES = [
       }
     },
   },
+
   {
     group: 'breath',
-    // Only runs when breathing history was passed in; null means "unknown", not "none".
+
     match: ({ breathingSessions }) =>
       Array.isArray(breathingSessions) && breathingSessions.length === 0
         ? {
@@ -341,33 +437,40 @@ const RULES = [
           }
         : null,
   },
+
   {
     group: 'stress',
-    match: ({ stressLevel, mood }) =>
-      stressLevel && stressLevel <= LOW_STRESS && mood
+
+    match: ({ stressLevel, averages, mood }) => {
+      const dailyStress = averages?.daily?.stress ?? stressLevel
+
+      return dailyStress && dailyStress <= LOW_STRESS && mood
         ? {
             id: 'stress-low',
             title: 'Protect this calm',
-            body: 'Stress is low right now. Keep a light routine and notice what is helping.',
+            body: 'Your daily average stress is low right now. Keep a light routine and notice what is helping.',
             tag: 'Balance',
           }
-        : null,
+        : null
+    },
   },
 ]
 
 /**
- * Builds up to four suggestions: personalized rule matches first, then tips
- * for the latest mood.
+ * Builds up to four suggestions, personalized rule matches first and then tips
+ * for the latest mood, followed by one journal suggestion.
  *
- * moodId, stressLevel: the latest check-in.
- * recentEntries (optional): mood entries from the last week, oldest first.
- * breathingSessions (optional): sessions from the last week. Leave it out if unknown.
+ * moodId and stressLevel represent the latest check-in.
+ * recentEntries contains recent mood entries, oldest first.
+ * breathingSessions contains recent breathing sessions.
+ * averages contains daily and weekly mood/stress averages.
  */
 export function buildSuggestions({
   moodId,
   stressLevel,
   recentEntries = [],
   breathingSessions = null,
+  averages = null,
   now = new Date(),
   page = 0,
 }) {
@@ -376,36 +479,71 @@ export function buildSuggestions({
     stressLevel,
     recentEntries,
     breathingSessions,
+    averages,
     now,
   }
 
   const suggestions = []
   const usedGroups = new Set()
+
   for (const rule of RULES) {
-    if (suggestions.length >= MAX_RULE_SUGGESTIONS) break
-    if (usedGroups.has(rule.group)) continue
+    if (suggestions.length >= MAX_RULE_SUGGESTIONS) {
+      break
+    }
+
+    if (usedGroups.has(rule.group)) {
+      continue
+    }
+
     const suggestion = rule.match(context)
+
     if (suggestion) {
       suggestions.push({
         ...suggestion,
-        reason: suggestion.reason || RULE_REASONS[suggestion.id] || becauseMood(context),
+        reason:
+          suggestion.reason ||
+          RULE_REASONS[suggestion.id] ||
+          becauseMood(context),
       })
+
       usedGroups.add(rule.group)
     }
   }
 
-  const usedTags = new Set(suggestions.map((item) => item.tag))
+  const usedTags = new Set(
+    suggestions.map((item) => item.tag),
+  )
+
   const base = LIBRARY[moodId] || LIBRARY.default
-  const pageCount = Math.max(1, Math.ceil(base.length / LIBRARY_PAGE))
-  const start = (Math.abs(page) % pageCount) * LIBRARY_PAGE
-  for (let index = start; index < start + LIBRARY_PAGE; index += 1) {
+  const pageCount = Math.max(
+    1,
+    Math.ceil(base.length / LIBRARY_PAGE),
+  )
+
+  const start =
+    (Math.abs(page) % pageCount) * LIBRARY_PAGE
+
+  for (
+    let index = start;
+    index < start + LIBRARY_PAGE;
+    index += 1
+  ) {
     const item = base[index]
-    if (!item || suggestions.length >= MAX_SUGGESTIONS || usedTags.has(item.tag)) continue
+
+    if (
+      !item ||
+      suggestions.length >= MAX_SUGGESTIONS ||
+      usedTags.has(item.tag)
+    ) {
+      continue
+    }
+
     suggestions.push({
       id: `${moodId || 'default'}-${index}`,
       ...item,
       reason: item.reason || becauseMood(context),
     })
+
     usedTags.add(item.tag)
   }
 
@@ -417,7 +555,10 @@ export function buildSuggestions({
     reason: context.mood
       ? `Shown because writing can make this ${context.mood.label} mood easier to see.`
       : 'Shown because a few written lines can make the day easier to see.',
-    action: { type: 'journal', label: 'Open notebook' },
+    action: {
+      type: 'journal',
+      label: 'Open notebook',
+    },
   })
 
   return suggestions
