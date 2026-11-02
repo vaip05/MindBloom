@@ -4,6 +4,7 @@ import MoodFace from '../components/MoodFace'
 import MoodChart, { buildWeeklyMoodData } from '../components/MoodChart'
 import StressChart, { buildWeeklyStressData } from '../components/StressChart'
 import Card from '../components/ui/Card'
+import Button from '../components/ui/Button'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { useAuth } from '../context/AuthContext'
@@ -34,6 +35,7 @@ export default function Progress() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadAttempt, setReloadAttempt] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -61,7 +63,7 @@ export default function Progress() {
     return () => {
       active = false
     }
-  }, [user])
+  }, [user, reloadAttempt])
 
   const moodData = useMemo(() => buildWeeklyMoodData(entries), [entries])
   const stressData = useMemo(() => buildWeeklyStressData(entries), [entries])
@@ -83,10 +85,15 @@ export default function Progress() {
         </p>
       </header>
 
-      {loading ? <LoadingSpinner label="Loading your mood and stress history…" /> : (
-        <>
+      {loading ? <LoadingSpinner label="Loading your mood and stress history…" /> : error ? (
+        <Card className="border border-bloom-border bg-white p-6 shadow-sm">
           <ErrorMessage message={error} />
-
+          <Button className="mt-4" onClick={() => setReloadAttempt((attempt) => attempt + 1)}>
+            Try loading again
+          </Button>
+        </Card>
+      ) : (
+        <>
           <div className="grid gap-4 sm:grid-cols-3">
             <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-bloom-muted">Latest mood</p>

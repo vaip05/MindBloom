@@ -4,6 +4,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import ErrorMessage from '../components/ui/ErrorMessage'
+import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { useAuth } from '../context/AuthContext'
 import {
   BIO_MAX_LENGTH,
@@ -21,6 +22,9 @@ export default function Profile() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [profileMissing, setProfileMissing] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [saving, setSaving] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
 
@@ -28,14 +32,16 @@ export default function Profile() {
     let active = true
     async function load() {
       setLoading(true)
+      setLoadError('')
       try {
         const profile = await getUserProfile(user.uid)
         if (!active) return
+        setProfileMissing(!profile)
         if (profile?.displayName) setDisplayName(profile.displayName)
         if (profile?.avatarEmoji) setAvatarEmoji(profile.avatarEmoji)
         if (typeof profile?.bio === 'string') setBio(profile.bio)
-      } catch (err) {
-        if (active) setError(err.message)
+      } catch (loadFailure) {
+        if (active) setLoadError(loadFailure.message || 'Unable to load your profile.')
       } finally {
         if (active) setLoading(false)
       }
@@ -44,7 +50,7 @@ export default function Profile() {
     return () => {
       active = false
     }
-  }, [user.uid])
+  }, [user.uid, loadAttempt])
 
   async function handleSave(event) {
     event.preventDefault()
@@ -67,13 +73,15 @@ export default function Profile() {
     setSaving(true)
     try {
       await updateUserProfile(user.uid, {
+        email: user.email || '',
         displayName: displayName.trim(),
         avatarEmoji,
         bio: bio.trim(),
       })
+      setProfileMissing(false)
       setMessage('Profile updated.')
-    } catch (err) {
-      setError(err.message)
+    } catch (saveError) {
+      setError(saveError.message)
     } finally {
       setSaving(false)
     }
@@ -85,8 +93,8 @@ export default function Profile() {
     try {
       await logout()
       navigate('/login', { replace: true })
-    } catch (err) {
-      setError(err.message)
+    } catch (logoutError) {
+      setError(logoutError.message)
       setLoggingOut(false)
     }
   }
@@ -108,10 +116,20 @@ export default function Profile() {
       ) : null}
 
       <Card className="border border-bloom-border bg-bloom-card px-5 py-6 sm:px-6">
-        {loading ? (
-          <p className="text-sm text-bloom-muted">Loading your profile…</p>
+        {loading ? <LoadingSpinner label="Loading your profile…" /> : loadError ? (
+          <div>
+            <ErrorMessage message={loadError} />
+            <Button className="mt-4" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+              Try loading again
+            </Button>
+          </div>
         ) : (
           <form className="space-y-6" onSubmit={handleSave}>
+            {profileMissing ? (
+              <p className="rounded-2xl bg-bloom-blue-soft px-4 py-3 text-sm text-bloom-navy" role="status">
+                No saved profile was found. Save these details to create one for this account.
+              </p>
+            ) : null}
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <div
                 className="flex h-24 w-24 items-center justify-center rounded-full bg-bloom-pink-soft text-5xl shadow-sm"
@@ -159,7 +177,7 @@ export default function Profile() {
               id="displayName"
               label="Display name"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              onChange={(event) => setDisplayName(event.target.value)}
             />
 
             <label className="block" htmlFor="bio">
@@ -172,7 +190,7 @@ export default function Profile() {
                 maxLength={BIO_MAX_LENGTH}
                 rows={4}
                 placeholder="A short note."
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(event) => setBio(event.target.value)}
                 className="w-full rounded-md border border-bloom-border bg-bloom-card px-4 py-3 text-bloom-navy outline-none focus:border-bloom-lavender focus:ring-2 focus:ring-bloom-lavender/20"
               />
               <span className="mt-1.5 block text-right text-xs text-bloom-muted">
