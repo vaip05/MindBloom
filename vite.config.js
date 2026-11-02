@@ -17,7 +17,6 @@ export default defineConfig({
       'firebase/app',
       'firebase/auth',
       'firebase/firestore',
-      'lucide-react',
     ],
   },
 })

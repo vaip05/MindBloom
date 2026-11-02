@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
 import Button from '../components/ui/Button'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import JournalNotebook from '../components/JournalNotebook'

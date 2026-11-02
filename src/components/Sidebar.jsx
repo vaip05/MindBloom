@@ -1,16 +1,14 @@
 import { NavLink } from 'react-router-dom'
-import {
-  Bell,
-  BookOpen,
-  ChartLine,
-  Flower2,
-  Heart,
-  Home,
-  Menu,
-  Sparkles,
-  User,
-  X,
-} from 'lucide-react'
+import Bell from 'lucide-react/dist/esm/icons/bell.mjs'
+import BookOpen from 'lucide-react/dist/esm/icons/book-open.mjs'
+import ChartLine from 'lucide-react/dist/esm/icons/chart-line.mjs'
+import Flower2 from 'lucide-react/dist/esm/icons/flower-2.mjs'
+import Heart from 'lucide-react/dist/esm/icons/heart.mjs'
+import Home from 'lucide-react/dist/esm/icons/home.mjs'
+import Menu from 'lucide-react/dist/esm/icons/menu.mjs'
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
+import User from 'lucide-react/dist/esm/icons/user.mjs'
+import X from 'lucide-react/dist/esm/icons/x.mjs'
 import { useState } from 'react'
 import BrandLogo from './BrandLogo'
 import DecorativePetals from './DecorativePetals'
