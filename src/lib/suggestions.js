@@ -356,8 +356,8 @@ const RULES = [
 ]
 
 /**
- * Builds up to four suggestions: personalized rule matches first, then tips
- * for the latest mood.
+ * Builds up to four suggestions, personalized rule matches first and then tips
+ * for the latest mood, followed by one journal suggestion.
  *
  * moodId, stressLevel: the latest check-in.
  * recentEntries (optional): mood entries from the last week, oldest first.
