@@ -1,291 +1,260 @@
 import { useEffect, useState } from 'react'
+import Minus from 'lucide-react/dist/esm/icons/minus.mjs'
+import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
+import Card from '../components/ui/Card'
+import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
+import ErrorMessage from '../components/ui/ErrorMessage'
 import { useAuth } from '../context/AuthContext'
-import {
-  getReminders,
-  saveReminder,
-} from '../services/firestoreServices'
-import {
-  notificationsSupported,
-  requestNotificationPermission,
-  scheduleReminderNotification,
-  showWellnessNotification,
-} from '../lib/notifications'
+import { deleteReminder, saveReminder } from '../services/firestoreServices'
+import { reminderDateTime, requestNotificationPermission, todayDateInput } from '../lib/notifications'
+import { syncReminderSchedule } from '../lib/reminderSchedule'
 
-const defaultReminder = {
-  enabled: false,
-  time: '09:00',
-  message: 'Take a moment for yourself.',
+const MESSAGE_MAX = 180
+const REMINDER_LIMIT = 20
+const DEFAULT_MESSAGE = 'Take a moment for yourself.'
+
+function blankReminder() {
+  return {
+    key: crypto.randomUUID(),
+    id: null,
+    date: todayDateInput(),
+    time: '20:00',
+    message: DEFAULT_MESSAGE,
+    enabled: true,
+    saving: false,
+  }
+}
+
+function fromSaved(reminder) {
+  return {
+    key: reminder.id,
+    id: reminder.id,
+    date: reminder.date || todayDateInput(),
+    time: reminder.time || '20:00',
+    message: reminder.message || DEFAULT_MESSAGE,
+    enabled: Boolean(reminder.enabled),
+    saving: false,
+  }
 }
 
 export default function Reminders() {
   const { user } = useAuth()
-
-  const [reminder, setReminder] = useState(defaultReminder)
-  const [reminderId, setReminderId] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [status, setStatus] = useState('')
+  const [reminders, setReminders] = useState([])
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function loadReminder() {
-      if (!user) {
-        setLoading(false)
-        return
-      }
-
+    let active = true
+    async function load() {
       try {
-        const reminders = await getReminders(user.uid)
-
-        if (reminders.length > 0) {
-          const savedReminder = reminders[0]
-
-          setReminder({
-            enabled: Boolean(savedReminder.enabled),
-            time: savedReminder.time || defaultReminder.time,
-            message: savedReminder.message || defaultReminder.message,
-          })
-
-          setReminderId(savedReminder.id)
-        }
+        const saved = await syncReminderSchedule(user.uid)
+        if (!active) return
+        setReminders(saved.length > 0 ? saved.map(fromSaved) : [blankReminder()])
       } catch (loadError) {
-        setError(loadError.message || 'Unable to load reminder settings.')
+        if (active) setError(loadError?.message || 'Unable to load reminders.')
       } finally {
-        setLoading(false)
+        if (active) setLoading(false)
       }
     }
-
-    loadReminder()
-  }, [user])
-
-  useEffect(() => {
-    if (!reminder.enabled || !reminder.time) {
-      return undefined
+    load()
+    return () => {
+      active = false
     }
+  }, [user.uid])
 
-    return scheduleReminderNotification(reminder, () => {
-      setStatus('Your wellness reminder was sent.')
-    })
-  }, [reminder])
-
-  function updateReminder(field, value) {
-    setReminder((current) => ({
-      ...current,
-      [field]: value,
-    }))
-
-    setStatus('')
-    setError('')
-  }
-
-  async function handleSave(event) {
-    event.preventDefault()
-
-    if (!user) {
-      setError('You must be logged in to save reminder settings.')
-      return
-    }
-
-    setSaving(true)
-    setStatus('')
-    setError('')
-
-    try {
-      if (reminder.enabled) {
-        const permission = await requestNotificationPermission()
-
-        if (!permission.granted) {
-          setError(permission.message)
-          return
-        }
-      }
-
-      const savedReminder = await saveReminder(user.uid, {
-        id: reminderId,
-        enabled: reminder.enabled,
-        time: reminder.time,
-        message: reminder.message,
-      })
-
-      setReminderId(savedReminder.id)
-
-      setReminder({
-        enabled: reminder.enabled,
-        time: savedReminder.time || reminder.time,
-        message: savedReminder.message || reminder.message,
-      })
-
-      setStatus('Reminder settings saved.')
-    } catch (saveError) {
-      setError(saveError.message || 'Unable to save reminder settings.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleTestNotification() {
-    setStatus('')
-    setError('')
-
-    const permission = await requestNotificationPermission()
-
-    if (!permission.granted) {
-      setError(permission.message)
-      return
-    }
-
-    const notificationShown = showWellnessNotification({
-      title: 'MindBloom test reminder',
-      body: reminder.message || defaultReminder.message,
-    })
-
-    if (notificationShown) {
-      setStatus('Test notification sent.')
-    } else {
-      setError('The notification could not be displayed.')
-    }
-  }
-
-  if (loading) {
-    return (
-      <main className="mx-auto max-w-6xl px-6 py-6">
-        <p className="text-base text-bloom-ink-muted">
-          Loading reminder settings...
-        </p>
-      </main>
+  function updateReminder(key, patch) {
+    setReminders((current) =>
+      current.map((reminder) => (reminder.key === key ? { ...reminder, ...patch } : reminder)),
     )
   }
 
+  async function removeReminder(reminder) {
+    setError('')
+    setNotice('')
+    if (!reminder.id) {
+      setReminders((current) => current.filter((item) => item.key !== reminder.key))
+      return
+    }
+    updateReminder(reminder.key, { saving: true })
+    try {
+      await deleteReminder(user.uid, reminder.id)
+      setReminders((current) => current.filter((item) => item.key !== reminder.key))
+      await syncReminderSchedule(user.uid)
+      setNotice('Reminder removed.')
+    } catch (removeError) {
+      updateReminder(reminder.key, { saving: false })
+      setError(removeError?.message || 'Unable to remove the reminder.')
+    }
+  }
+
+  function addReminder() {
+    setError('')
+    setNotice('')
+    if (reminders.length >= REMINDER_LIMIT) {
+      setError(`You can keep up to ${REMINDER_LIMIT} reminders.`)
+      return
+    }
+    setReminders((current) => [...current, blankReminder()])
+  }
+
+  async function handleSave(event, reminder) {
+    event.preventDefault()
+    setError('')
+    setNotice('')
+    if (!reminder.date) {
+      setError('Choose a date.')
+      return
+    }
+    if (!reminder.time) {
+      setError('Choose a time.')
+      return
+    }
+    const when = reminderDateTime(reminder)
+    if (!when || when.getTime() < Date.now() - 60_000) {
+      setError('Choose a date and time that has not already passed.')
+      return
+    }
+    const trimmed = reminder.message.trim()
+    if (!trimmed) {
+      setError('Write a short message.')
+      return
+    }
+    if (trimmed.length > MESSAGE_MAX) {
+      setError(`Message must be ${MESSAGE_MAX} characters or fewer.`)
+      return
+    }
+
+    updateReminder(reminder.key, { saving: true })
+    try {
+      let permissionNote = ''
+      if (reminder.enabled) {
+        const permission = await requestNotificationPermission()
+        permissionNote = permission.message
+      }
+      const saved = await saveReminder(user.uid, {
+        id: reminder.id,
+        enabled: reminder.enabled,
+        date: reminder.date,
+        time: reminder.time,
+        message: trimmed,
+      })
+      updateReminder(reminder.key, {
+        id: saved.id,
+        key: saved.id,
+        message: trimmed,
+        saving: false,
+      })
+      await syncReminderSchedule(user.uid)
+      setNotice(permissionNote ? `Saved. ${permissionNote}` : 'Reminder saved.')
+    } catch (saveError) {
+      updateReminder(reminder.key, { saving: false })
+      setError(saveError?.message || 'Unable to save the reminder.')
+    }
+  }
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-6">
-      <div className="flex items-start justify-between gap-8">
+    <div className="space-y-6">
+      <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-semibold text-bloom-ink">
-            Daily Reminders
-          </h1>
-
-          <p className="mt-2 text-lg text-bloom-ink-muted">
-            Choose when MindBloom should remind you to take a moment for yourself.
+          <h1 className="text-3xl font-extrabold text-bloom-navy">Daily Reminders</h1>
+          <p className="mt-2 max-w-2xl text-bloom-navy/80">
+            A date, a time, and a short message, sent as a browser notification while this tab is open.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={addReminder}
+          aria-label="Add reminder"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-bloom-border bg-white text-bloom-navy transition hover:border-bloom-lavender"
+        >
+          <Plus className="h-5 w-5" aria-hidden="true" />
+        </button>
+      </header>
 
-        <div className="hidden shrink-0 md:block">
-          <img
-            src="/favicon.svg"
-            alt="MindBloom"
-            className="h-28 w-28 object-contain"
-          />
+      <ErrorMessage message={error} />
+      {notice ? (
+        <div className="rounded-md border border-bloom-green bg-bloom-green-soft px-4 py-3 text-sm text-bloom-navy">
+          {notice}
         </div>
-      </div>
+      ) : null}
 
-      <form
-        onSubmit={handleSave}
-        className="mt-6 rounded-3xl border border-bloom-border bg-white p-6 shadow-sm"
-      >
-        <label className="flex items-center justify-between gap-6">
-          <span className="text-xl font-medium text-bloom-ink">
-            Enable daily reminder
-          </span>
-
-          <input
-            type="checkbox"
-            checked={reminder.enabled}
-            onChange={(event) =>
-              updateReminder('enabled', event.target.checked)
-            }
-            className="h-6 w-6 accent-bloom-yellow"
-          />
-        </label>
-
-        <p className="mt-2 text-base text-bloom-ink-muted">
-          Browser notifications must be enabled to receive reminders.
-        </p>
-
-        <div className="mt-5">
-          <label
-            htmlFor="reminder-time"
-            className="block text-xl font-medium text-bloom-ink"
+      {loading ? (
+        <p className="text-sm text-bloom-muted">Loading your reminders…</p>
+      ) : (
+        reminders.map((reminder, index) => (
+          <Card
+            key={reminder.key}
+            className="border border-bloom-border bg-white px-5 py-6 sm:px-6"
           >
-            Reminder time
-          </label>
+            <form className="space-y-6" onSubmit={(event) => handleSave(event, reminder)}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-bold tracking-[0.16em] text-bloom-navy uppercase">
+                  Reminder {index + 1}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => removeReminder(reminder)}
+                  disabled={reminder.saving}
+                  aria-label={`Remove reminder ${index + 1}`}
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-bloom-border bg-white text-bloom-navy transition hover:border-bloom-lavender disabled:opacity-60"
+                >
+                  <Minus className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  id={`reminder-date-${reminder.key}`}
+                  label="Date"
+                  type="date"
+                  value={reminder.date}
+                  min={todayDateInput()}
+                  onChange={(event) => updateReminder(reminder.key, { date: event.target.value })}
+                  required
+                />
+                <Input
+                  id={`reminder-time-${reminder.key}`}
+                  label="Time"
+                  type="time"
+                  value={reminder.time}
+                  onChange={(event) => updateReminder(reminder.key, { time: event.target.value })}
+                  required
+                />
+              </div>
 
-          <input
-            id="reminder-time"
-            type="time"
-            value={reminder.time}
-            onChange={(event) =>
-              updateReminder('time', event.target.value)
-            }
-            className="mt-2 w-full rounded-2xl border border-bloom-border px-4 py-3 text-lg text-bloom-ink outline-none focus:border-bloom-yellow"
-          />
-        </div>
+              <label className="block" htmlFor={`reminder-message-${reminder.key}`}>
+                <span className="mb-2 block text-sm font-semibold text-bloom-navy">Message</span>
+                <textarea
+                  id={`reminder-message-${reminder.key}`}
+                  value={reminder.message}
+                  maxLength={MESSAGE_MAX}
+                  rows={3}
+                  onChange={(event) => updateReminder(reminder.key, { message: event.target.value })}
+                  className="w-full rounded-md border border-bloom-border bg-white px-4 py-3 text-bloom-navy outline-none focus:border-bloom-lavender focus:ring-2 focus:ring-bloom-lavender/20"
+                />
+                <span className="mt-1.5 block text-right text-xs text-bloom-muted">
+                  {reminder.message.length}/{MESSAGE_MAX}
+                </span>
+              </label>
 
-        <div className="mt-5">
-          <label
-            htmlFor="reminder-message"
-            className="block text-xl font-medium text-bloom-ink"
-          >
-            Reminder message
-          </label>
+              <label className="flex items-center gap-3 text-sm font-semibold text-bloom-navy">
+                <input
+                  type="checkbox"
+                  checked={reminder.enabled}
+                  onChange={(event) => updateReminder(reminder.key, { enabled: event.target.checked })}
+                  className="h-4 w-4 accent-bloom-lavender"
+                />
+                Send this reminder
+              </label>
 
-          <textarea
-            id="reminder-message"
-            value={reminder.message}
-            onChange={(event) =>
-              updateReminder('message', event.target.value)
-            }
-            rows={3}
-            maxLength={160}
-            className="mt-2 w-full resize-none rounded-2xl border border-bloom-border px-4 py-3 text-lg text-bloom-ink outline-none focus:border-bloom-yellow"
-          />
-
-          <p className="mt-1 text-right text-sm text-bloom-ink-muted">
-            {reminder.message.length}/160
-          </p>
-        </div>
-
-        {!notificationsSupported() && (
-          <p className="mt-4 text-base text-red-600">
-            This browser does not support notifications.
-          </p>
-        )}
-
-        {error && (
-          <p className="mt-4 text-center text-base text-red-600">
-            {error}
-          </p>
-        )}
-
-        {status && (
-          <p className="mt-4 text-center text-base text-green-600">
-            {status}
-          </p>
-        )}
-
-        <div className="mt-5 flex w-full justify-center">
-<button
-  type="submit"
-  disabled={saving}
-  className="rounded-2xl border-2 border-[#f5b6c2] bg-[#f5b6c2] px-6 py-3 text-lg text-[#202033] transition hover:bg-[#f29aaa] disabled:cursor-not-allowed disabled:opacity-50"
->
-  {saving ? 'Saving...' : 'Save reminder'}
-</button>
-        </div>
-
-        <div className="mt-3 flex w-full justify-center">
-          <button
-            type="button"
-            onClick={handleTestNotification}
-            className="rounded-2xl border-2 border-[#959CEA] bg-[#959CEA] px-6 py-3 text-lg text-white transition hover:bg-[#858DDE]"
-          >
-            Test notification
-          </button>
-        </div>
-      </form>
-
-      <p className="mt-3 text-center text-base text-bloom-ink-muted">
-        Notifications are scheduled while this browser tab remains open.
-      </p>
-    </main>
+              <Button type="submit" disabled={reminder.saving}>
+                {reminder.saving ? 'Saving…' : 'Save reminder'}
+              </Button>
+            </form>
+          </Card>
+        ))
+      )}
+    </div>
   )
 }

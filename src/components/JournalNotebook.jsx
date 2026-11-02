@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown } from 'lucide-react'
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
 import Button from './ui/Button'
 import { useAuth } from '../context/AuthContext'
 import { JOURNAL_PROMPTS } from '../lib/journalPrompts'

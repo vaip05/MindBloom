@@ -28,16 +28,23 @@ export async function requestNotificationPermission() {
   }
 }
 
-export function showWellnessNotification({ title, body }) {
+export function showWellnessNotification({ title, body, tag }) {
+  const notice = {
+    title: title || 'MindBloom reminder',
+    body: body || 'Take a moment for yourself today.',
+  }
+  window.dispatchEvent(new CustomEvent('mindbloom-reminder', { detail: notice }))
+
   if (!notificationsSupported() || Notification.permission !== 'granted') {
     return false
   }
 
   try {
-    new Notification(title || 'MindBloom reminder', {
-      body: body || 'Take a moment for yourself today.',
+    new Notification(notice.title, {
+      body: notice.body,
       icon: '/favicon.svg',
-      tag: 'mindbloom-reminder',
+      tag: tag || 'mindbloom-reminder',
+      requireInteraction: true,
     })
     return true
   } catch {
@@ -45,27 +52,55 @@ export function showWellnessNotification({ title, body }) {
   }
 }
 
-/** Schedule a same-day browser notification for a HH:mm local time. */
-export function scheduleReminderNotification(reminder, onFire) {
-  if (!reminder?.enabled || !reminder?.time) return () => {}
+export function todayDateInput(date = new Date()) {
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
 
+export function reminderDateTime(reminder) {
+  if (!reminder?.time) return null
   const [hours, minutes] = reminder.time.split(':').map(Number)
-  const now = new Date()
-  const target = new Date()
-  target.setHours(hours, minutes, 0, 0)
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(reminder.date || todayDateInput())
+  if (!match) return null
+  const target = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hours, minutes, 0, 0)
+  return Number.isNaN(target.getTime()) ? null : target
+}
 
-  if (target <= now) {
-    target.setDate(target.getDate() + 1)
-  }
+/** Schedule a browser notification for a saved local date and time. */
+export function scheduleReminderNotification(reminder, onFire) {
+  const target = reminderDateTime(reminder)
+  if (!reminder?.enabled || !target) return () => {}
 
-  const delay = target.getTime() - now.getTime()
-  const timerId = window.setTimeout(() => {
+  const deliver = () => {
     showWellnessNotification({
       title: 'MindBloom wellness reminder',
       body: reminder.message || 'Take a moment for yourself.',
+      tag: reminder.id ? `mindbloom-reminder-${reminder.id}` : 'mindbloom-reminder',
     })
     onFire?.(reminder)
-  }, delay)
+  }
 
-  return () => window.clearTimeout(timerId)
+  let delay = target.getTime() - Date.now()
+  // The saved time is the start of that minute. A few seconds later is still "now".
+  if (delay <= 0 && delay >= -60_000) {
+    deliver()
+    return () => {}
+  }
+  if (delay < -60_000) {
+    if (reminder.date) return () => {}
+    target.setDate(target.getDate() + 1)
+    delay = target.getTime() - Date.now()
+  }
+
+  let stopNext = () => {}
+  const timerId = window.setTimeout(() => {
+    stopNext = scheduleReminderNotification(reminder, onFire)
+  }, Math.min(delay, 2_147_483_647))
+
+  return () => {
+    window.clearTimeout(timerId)
+    stopNext()
+  }
 }

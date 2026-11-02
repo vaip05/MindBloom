@@ -253,6 +253,7 @@ export async function saveReminder(uid, reminder) {
 
   const reminderData = {
     enabled: Boolean(reminder.enabled),
+    date: reminder.date,
     time: reminder.time,
     message:
       reminder.message || 'Take a moment for yourself.',
@@ -312,6 +313,10 @@ export async function saveReminder(uid, reminder) {
 
 export async function getReminders(uid) {
   return listByUser('reminders', uid, 20)
+}
+
+export async function deleteReminder(uid, reminderId) {
+  await deleteDoc(doc(requireDb(), 'users', uid, 'reminders', reminderId))
 }
 
 export async function refreshSuggestions(uid) {
