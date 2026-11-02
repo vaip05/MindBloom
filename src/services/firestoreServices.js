@@ -6,20 +6,21 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
-  deleteDoc,
   getDocs,
+  limit,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
   updateDoc,
-  limit,
 } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from '../lib/firebase'
 import { DEFAULT_AVATAR } from '../lib/constants'
 import { buildSuggestions } from '../lib/suggestions'
+import { calculateWellnessAverages } from '../lib/wellnessAverages'
 
 function requireDb() {
   if (!isFirebaseConfigured || !db) {
@@ -27,6 +28,7 @@ function requireDb() {
       'Firebase is not configured. Add your keys to a .env file (see .env.example).',
     )
   }
+
   return db
 }
 
@@ -49,12 +51,16 @@ function daysAgo(n) {
 function toDate(value) {
   if (!value) return null
   if (typeof value.toDate === 'function') return value.toDate()
-  return new Date(value)
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 function withinDays(entry, days) {
   const created = toDate(entry.createdAt) || toDate(entry.localDate)
+
   if (!created) return false
+
   return created >= daysAgo(days)
 }
 
@@ -203,7 +209,8 @@ export async function getRecentStressEntries(uid, days = 7) {
   return entries
     .filter(
       (entry) =>
-        entry.stressLevel != null && withinDays(entry, days),
+        entry.stressLevel != null &&
+        withinDays(entry, days),
     )
     .reverse()
 }
@@ -242,7 +249,8 @@ export async function getBreathingSessions(uid, days = 30) {
       if (entry.completed === false) return false
 
       const completedAt =
-        toDate(entry.completedAt) || toDate(entry.createdAt)
+        toDate(entry.completedAt) ||
+        toDate(entry.createdAt)
 
       return completedAt != null && completedAt >= cutoff
     })
@@ -259,7 +267,6 @@ export async function saveReminder(uid, reminder) {
       reminder.message || 'Take a moment for yourself.',
   }
 
-  // Also update the reminderDefaults fields inside the user document.
   await setDoc(
     doc(database, 'users', uid),
     {
@@ -316,21 +323,47 @@ export async function getReminders(uid) {
 }
 
 export async function deleteReminder(uid, reminderId) {
-  await deleteDoc(doc(requireDb(), 'users', uid, 'reminders', reminderId))
+  const database = requireDb()
+
+  await deleteDoc(
+    doc(database, 'users', uid, 'reminders', reminderId),
+  )
 }
 
 export async function refreshSuggestions(uid) {
   const database = requireDb()
-  const ref = doc(database, 'users', uid, 'wellnessSuggestions', 'current')
-  const [mood, stress, currentSnap] = await Promise.all([
+
+  const ref = doc(
+    database,
+    'users',
+    uid,
+    'wellnessSuggestions',
+    'current',
+  )
+
+  const [
+    mood,
+    stress,
+    recentEntries,
+    breathingSessions,
+    currentSnap,
+  ] = await Promise.all([
     getLatestMood(uid),
     getLatestStress(uid),
+    getRecentMoodEntries(uid, 7),
+    getBreathingSessions(uid, 7),
     getDoc(ref),
   ])
+
+  const averages = calculateWellnessAverages(recentEntries)
   const page = (currentSnap.data()?.page ?? 0) + 1
+
   const suggestions = buildSuggestions({
     moodId: mood?.moodId,
     stressLevel: stress?.stressLevel,
+    recentEntries,
+    breathingSessions,
+    averages,
     page,
   })
 
@@ -338,6 +371,11 @@ export async function refreshSuggestions(uid) {
     uid,
     suggestions,
     page,
+    averages,
+    dailyMoodAverage: averages.daily.mood,
+    dailyStressAverage: averages.daily.stress,
+    weeklyMoodAverage: averages.weekly.mood,
+    weeklyStressAverage: averages.weekly.stress,
     basedOnMood: mood?.moodId || null,
     basedOnStress: stress?.stressLevel ?? null,
     updatedAt: serverTimestamp(),
@@ -346,28 +384,58 @@ export async function refreshSuggestions(uid) {
   return suggestions
 }
 
-export async function saveJournalEntry(uid, { id, title, body, kind = 'free', prompt = '' }) {
+export async function saveJournalEntry(
+  uid,
+  {
+    id,
+    title,
+    body,
+    kind = 'free',
+    prompt = '',
+  },
+) {
   const database = requireDb()
   const trimmedPrompt = prompt.trim()
+
   const payload = {
     title:
       title.trim() ||
-      (kind === 'prompt' ? trimmedPrompt.slice(0, 80) : '') ||
-      (kind === 'suggestion' ? 'From suggestions' : 'Untitled'),
+      (kind === 'prompt'
+        ? trimmedPrompt.slice(0, 80)
+        : '') ||
+      (kind === 'suggestion'
+        ? 'From suggestions'
+        : 'Untitled'),
     body: body.trim(),
     kind,
     updatedAt: serverTimestamp(),
   }
-  if (kind === 'prompt' && trimmedPrompt) payload.prompt = trimmedPrompt
+
+  if (kind === 'prompt' && trimmedPrompt) {
+    payload.prompt = trimmedPrompt
+  }
+
   if (id) {
-    await updateDoc(doc(database, 'users', uid, 'journalEntries', id), payload)
+    await updateDoc(
+      doc(database, 'users', uid, 'journalEntries', id),
+      payload,
+    )
+
     return { id, ...payload }
   }
-  const ref = await addDoc(userCollection(database, uid, 'journalEntries'), {
+
+  const ref = await addDoc(
+    userCollection(database, uid, 'journalEntries'),
+    {
+      ...payload,
+      createdAt: serverTimestamp(),
+    },
+  )
+
+  return {
+    id: ref.id,
     ...payload,
-    createdAt: serverTimestamp(),
-  })
-  return { id: ref.id, ...payload }
+  }
 }
 
 export async function getJournalEntries(uid) {
@@ -375,14 +443,24 @@ export async function getJournalEntries(uid) {
 }
 
 export async function deleteJournalEntry(uid, entryId) {
-  await deleteDoc(doc(requireDb(), 'users', uid, 'journalEntries', entryId))
+  const database = requireDb()
+
+  await deleteDoc(
+    doc(database, 'users', uid, 'journalEntries', entryId),
+  )
 }
 
 export async function getSuggestions(uid) {
   const database = requireDb()
 
   const snap = await getDoc(
-    doc(database, 'users', uid, 'wellnessSuggestions', 'current'),
+    doc(
+      database,
+      'users',
+      uid,
+      'wellnessSuggestions',
+      'current',
+    ),
   )
 
   if (!snap.exists()) {

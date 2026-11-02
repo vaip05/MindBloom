@@ -6,8 +6,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
     environment: 'jsdom',
-    // tests/ holds Firestore rules tests that need the emulator and run under node:test.
-    include: ['src/**/*.test.{js,jsx}'],
+    include: ['src/**/*.test.{js,jsx}', 'tests/**/*.test.{js,jsx}'],
+    // Needs the Firestore emulator and runs under node:test through test:security.
+    exclude: ['tests/firestore.rules.test.js', 'node_modules/**'],
     setupFiles: ['src/testSetup.js'],
   },
   server: {
