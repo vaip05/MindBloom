@@ -30,6 +30,8 @@ export default function Breath() {
   const [historyLoading, setHistoryLoading] = useState(true)
   const [historyError, setHistoryError] = useState('')
   const [pendingSessionId, setPendingSessionId] = useState('')
+  const [historyReloadAttempt, setHistoryReloadAttempt] = useState(0)
+  const [savingSession, setSavingSession] = useState(false)
 
   const selected = getExerciseById(selectedId)
 
@@ -54,7 +56,7 @@ export default function Breath() {
     return () => {
       active = false
     }
-  }, [user])
+  }, [user, historyReloadAttempt])
 
   async function refreshHistory() {
     if (!user) return
@@ -98,15 +100,18 @@ export default function Breath() {
   async function handleComplete(session) {
     setSaveError('')
     setSaved(false)
+    setSavingSession(true)
 
-    if (user) {
-      try {
+    try {
+      if (user) {
         await saveBreathingSession(user.uid, session)
         setSaved(true)
         await refreshHistory()
-      } catch (error) {
-        setSaveError(error?.message || 'The session finished, but it could not be saved.')
       }
+    } catch (error) {
+      setSaveError(error?.message || 'The session finished, but it could not be saved.')
+    } finally {
+      setSavingSession(false)
     }
 
     setLastSession(session)
@@ -189,6 +194,11 @@ export default function Breath() {
             onComplete={handleComplete}
             onExit={() => setView('choose')}
           />
+          {savingSession ? (
+            <p className="mt-3 text-center text-sm font-semibold text-bloom-navy" role="status">
+              Saving your completed session…
+            </p>
+          ) : null}
         </Card>
       ) : null}
 
@@ -222,6 +232,7 @@ export default function Breath() {
           sessions={sessions}
           loading={historyLoading}
           error={historyError}
+          onRetry={() => setHistoryReloadAttempt((attempt) => attempt + 1)}
           pendingSessionId={pendingSessionId}
           onRepeat={handleRepeat}
           onToggleGoodSession={handleToggleGoodSession}

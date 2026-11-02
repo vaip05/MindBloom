@@ -62,7 +62,7 @@ export function scheduleReminderNotification(reminder, onFire) {
   const timerId = window.setTimeout(() => {
     showWellnessNotification({
       title: 'MindBloom wellness reminder',
-      body: reminder.message || 'Take a moment for yourself.',
+      body: 'Take a moment for yourself.',
     })
     onFire?.(reminder)
   }, delay)

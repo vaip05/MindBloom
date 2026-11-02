@@ -21,10 +21,14 @@ export default function Suggestions() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [loadAttempt, setLoadAttempt] = useState(0)
 
   useEffect(() => {
     let active = true
     async function load() {
+      setLoading(true)
+      setLoadError('')
       try {
         const [saved, mood, stress] = await Promise.all([
           getSuggestions(user.uid),
@@ -36,7 +40,7 @@ export default function Suggestions() {
         setLatestMood(mood)
         setLatestStress(stress)
       } catch (err) {
-        if (active) setError(err.message)
+        if (active) setLoadError(err.message || 'Unable to load your suggestions.')
       } finally {
         if (active) setLoading(false)
       }
@@ -45,7 +49,7 @@ export default function Suggestions() {
     return () => {
       active = false
     }
-  }, [user.uid])
+  }, [user.uid, loadAttempt])
 
   // Re-runs the rules, e.g. after a new check-in or later in the day.
   async function handleRefresh() {
@@ -79,6 +83,13 @@ export default function Suggestions() {
 
       {loading ? (
         <LoadingSpinner label="Finding suggestions…" />
+      ) : loadError ? (
+        <Card className="border border-bloom-border bg-white p-6 shadow-sm">
+          <ErrorMessage message={loadError} />
+          <Button className="mt-4" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+            Try loading again
+          </Button>
+        </Card>
       ) : (
         <>
           <Card className="flex flex-col gap-4 bg-bloom-peach-soft px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-7">
@@ -112,8 +123,17 @@ export default function Suggestions() {
 
           <ErrorMessage message={error} />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {suggestions.map((item) => (
+          {suggestions.length === 0 ? (
+            <Card className="border border-bloom-border bg-white p-6 text-center shadow-sm">
+              <h2 className="font-bold text-bloom-navy">No suggestions available yet</h2>
+              <p className="mt-2 text-sm text-bloom-muted">Log a mood check-in, then refresh to get personalized ideas.</p>
+              <Link to="/mood" className="mt-4 inline-flex rounded-full bg-bloom-lavender px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
+                Go to Mood &amp; Stress
+              </Link>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {suggestions.map((item) => (
               <Card
                 key={item.id}
                 className="flex flex-col border border-bloom-border bg-white p-5 shadow-sm sm:p-6"
@@ -131,8 +151,9 @@ export default function Suggestions() {
                   </Link>
                 ) : null}
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

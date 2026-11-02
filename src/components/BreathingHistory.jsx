@@ -38,6 +38,7 @@ export default function BreathingHistory({
   sessions,
   loading,
   error,
+  onRetry,
   onRepeat,
   onToggleGoodSession,
   pendingSessionId,
@@ -125,6 +126,15 @@ export default function BreathingHistory({
       </div>
 
       <ErrorMessage message={error} className="mt-5" />
+      {error ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-3 rounded-md bg-bloom-lavender px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+        >
+          Try loading again
+        </button>
+      ) : null}
 
       {loading ? (
         <p className="mt-6 text-sm text-bloom-muted">Looking through finished sessions…</p>

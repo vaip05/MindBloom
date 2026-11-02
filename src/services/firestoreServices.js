@@ -100,10 +100,12 @@ export async function getUserProfile(uid) {
 export async function updateUserProfile(uid, data) {
   const database = requireDb()
 
-  await updateDoc(doc(database, 'users', uid), {
+  await setDoc(doc(database, 'users', uid), {
+    uid,
+    email: data.email || '',
     ...data,
     updatedAt: serverTimestamp(),
-  })
+  }, { merge: true })
 }
 
 export async function saveMoodEntry(

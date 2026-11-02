@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import Button from '../components/ui/Button'
+import ErrorMessage from '../components/ui/ErrorMessage'
+import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { useAuth } from '../context/AuthContext'
 import {
   getReminders,
@@ -22,13 +25,22 @@ export default function Reminders() {
 
   const [reminder, setReminder] = useState(defaultReminder)
   const [reminderId, setReminderId] = useState(null)
+  const [hasSavedReminder, setHasSavedReminder] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [testingNotification, setTestingNotification] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
     async function loadReminder() {
+      setLoading(true)
+      setLoadError('')
+      setHasSavedReminder(false)
+      setReminderId(null)
+      setReminder(defaultReminder)
       if (!user) {
         setLoading(false)
         return
@@ -39,6 +51,7 @@ export default function Reminders() {
 
         if (reminders.length > 0) {
           const savedReminder = reminders[0]
+          setHasSavedReminder(true)
 
           setReminder({
             enabled: Boolean(savedReminder.enabled),
@@ -49,14 +62,14 @@ export default function Reminders() {
           setReminderId(savedReminder.id)
         }
       } catch (loadError) {
-        setError(loadError.message || 'Unable to load reminder settings.')
+        setLoadError(loadError.message || 'Unable to load reminder settings.')
       } finally {
         setLoading(false)
       }
     }
 
     loadReminder()
-  }, [user])
+  }, [user, loadAttempt])
 
   useEffect(() => {
     if (!reminder.enabled || !reminder.time) {
@@ -108,6 +121,7 @@ export default function Reminders() {
       })
 
       setReminderId(savedReminder.id)
+      setHasSavedReminder(true)
 
       setReminder({
         enabled: reminder.enabled,
@@ -126,32 +140,49 @@ export default function Reminders() {
   async function handleTestNotification() {
     setStatus('')
     setError('')
+    setTestingNotification(true)
 
-    const permission = await requestNotificationPermission()
+    try {
+      const permission = await requestNotificationPermission()
 
-    if (!permission.granted) {
-      setError(permission.message)
-      return
-    }
+      if (!permission.granted) {
+        setError(permission.message)
+        return
+      }
 
-    const notificationShown = showWellnessNotification({
-      title: 'MindBloom test reminder',
-      body: reminder.message || defaultReminder.message,
-    })
+      const notificationShown = showWellnessNotification({
+        title: 'MindBloom test reminder',
+        body: 'Take a moment for yourself.',
+      })
 
-    if (notificationShown) {
-      setStatus('Test notification sent.')
-    } else {
-      setError('The notification could not be displayed.')
+      if (notificationShown) {
+        setStatus('Test notification sent. The notification uses generic text for privacy.')
+      } else {
+        setError('The notification could not be displayed.')
+      }
+    } catch (testError) {
+      setError(testError.message || 'Unable to test the notification.')
+    } finally {
+      setTestingNotification(false)
     }
   }
 
   if (loading) {
     return (
       <main className="mx-auto max-w-6xl px-6 py-6">
-        <p className="text-base text-bloom-ink-muted">
-          Loading reminder settings...
-        </p>
+        <LoadingSpinner label="Loading reminder settings…" />
+      </main>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <main className="mx-auto max-w-6xl space-y-4 px-6 py-6">
+        <h1 className="text-4xl font-semibold text-bloom-ink">Daily Reminders</h1>
+        <ErrorMessage message={loadError} />
+        <Button onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+          Try loading again
+        </Button>
       </main>
     )
   }
@@ -182,6 +213,12 @@ export default function Reminders() {
         onSubmit={handleSave}
         className="mt-6 rounded-3xl border border-bloom-border bg-white p-6 shadow-sm"
       >
+        {!hasSavedReminder ? (
+          <p className="mb-5 rounded-2xl bg-bloom-blue-soft px-4 py-3 text-sm text-bloom-ink">
+            No reminder has been saved yet. The settings below are defaults and will not be active until you save them.
+          </p>
+        ) : null}
+
         <label className="flex items-center justify-between gap-6">
           <span className="text-xl font-medium text-bloom-ink">
             Enable daily reminder
@@ -199,6 +236,9 @@ export default function Reminders() {
 
         <p className="mt-2 text-base text-bloom-ink-muted">
           Browser notifications must be enabled to receive reminders.
+        </p>
+        <p className="mt-2 text-sm text-bloom-ink-muted">
+          Notifications use a general message to protect your privacy; your custom reminder text stays in your account.
         </p>
 
         <div className="mt-5">
@@ -276,9 +316,10 @@ export default function Reminders() {
           <button
             type="button"
             onClick={handleTestNotification}
+            disabled={testingNotification}
             className="rounded-2xl border-2 border-[#959CEA] bg-[#959CEA] px-6 py-3 text-lg text-white transition hover:bg-[#858DDE]"
           >
-            Test notification
+            {testingNotification ? 'Testing…' : 'Test notification'}
           </button>
         </div>
       </form>
