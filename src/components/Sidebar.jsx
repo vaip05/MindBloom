@@ -12,6 +12,7 @@ import X from 'lucide-react/dist/esm/icons/x.mjs'
 import { useState } from 'react'
 import BrandLogo from './BrandLogo'
 import DecorativePetals from './DecorativePetals'
+import ThemeToggle from './ThemeToggle'
 import { NAV_ITEMS } from '../lib/constants'
 
 const ICONS = {
@@ -29,7 +30,7 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false)
 
   const nav = (
-    <nav className="mt-10 flex flex-1 flex-col gap-2">
+    <nav className="mt-6 flex flex-1 flex-col gap-2">
       {NAV_ITEMS.map((item) => {
         const Icon = ICONS[item.icon]
         return (
@@ -42,7 +43,7 @@ export default function Sidebar() {
               `flex items-center gap-3 rounded-md px-4 py-3 text-sm font-semibold transition ${
                 isActive
                   ? 'bg-bloom-pink-soft text-bloom-navy'
-                  : 'text-bloom-navy/80 hover:bg-white/70'
+                  : 'text-bloom-navy/80 hover:bg-bloom-card/70'
               }`
             }
           >
@@ -58,7 +59,7 @@ export default function Sidebar() {
     <>
       <button
         type="button"
-        className="fixed top-4 left-4 z-40 rounded-md bg-white p-2.5 shadow-sm border border-bloom-border lg:hidden"
+        className="fixed top-4 left-4 z-40 rounded-md bg-bloom-card p-2.5 shadow-sm border border-bloom-border lg:hidden"
         onClick={() => setOpen(true)}
         aria-label="Open navigation"
       >
@@ -68,14 +69,14 @@ export default function Sidebar() {
       {open ? (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-bloom-navy/20 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] lg:hidden"
           aria-label="Close navigation overlay"
           onClick={() => setOpen(false)}
         />
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] flex-col border-r border-bloom-border/70 bg-bloom-bg px-5 py-6 transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] flex-col overflow-y-auto border-r border-bloom-border/70 bg-bloom-bg px-5 py-6 transition-transform lg:static lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -91,9 +92,11 @@ export default function Sidebar() {
           </button>
         </div>
 
+        <ThemeToggle className="mt-5 w-full" />
+
         {nav}
 
-        <div className="relative mt-auto h-36 overflow-hidden">
+        <div className="relative mt-auto h-28 shrink-0 overflow-hidden">
           <DecorativePetals className="absolute inset-0" />
         </div>
       </aside>

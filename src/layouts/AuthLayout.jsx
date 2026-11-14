@@ -1,12 +1,14 @@
 import BrandLogo from '../components/BrandLogo'
 import DecorativePetals from '../components/DecorativePetals'
 import SunriseIllustration from '../components/SunriseIllustration'
+import ThemeToggle from '../components/ThemeToggle'
 
 export default function AuthLayout({ children }) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-bloom-bg">
       <div className="absolute top-6 left-6 z-10 md:top-8 md:left-10">
         <BrandLogo />
+        <ThemeToggle className="mt-4" />
       </div>
 
       <SunriseIllustration className="absolute top-4 right-4 w-40 md:top-8 md:right-10 md:w-56" />

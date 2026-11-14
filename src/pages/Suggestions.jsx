@@ -138,7 +138,7 @@ export default function Suggestions() {
             {visibleSuggestions.map((item) => (
               <Card
                 key={item.id}
-                className="flex flex-col border border-bloom-border bg-white p-5 shadow-sm sm:p-6"
+                className="flex flex-col border border-bloom-border bg-bloom-card p-5 shadow-sm sm:p-6"
               >
                 <span className="self-start rounded-full bg-bloom-peach-soft px-3 py-1 text-xs font-bold text-bloom-navy">
                   {item.tag}
@@ -163,7 +163,11 @@ export default function Suggestions() {
             ))}
           </div>
           {notebookOpen ? (
-            <JournalNotebook kind="suggestion" onClose={() => setNotebookOpen(false)} />
+            <JournalNotebook
+              kind="suggestion"
+              moodId={latestMood?.moodId || ''}
+              onClose={() => setNotebookOpen(false)}
+            />
           ) : null}
         </>
       )}

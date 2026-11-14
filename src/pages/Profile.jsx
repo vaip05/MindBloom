@@ -107,7 +107,7 @@ export default function Profile() {
         </div>
       ) : null}
 
-      <Card className="border border-bloom-border bg-white px-5 py-6 sm:px-6">
+      <Card className="border border-bloom-border bg-bloom-card px-5 py-6 sm:px-6">
         {loading ? (
           <p className="text-sm text-bloom-muted">Loading your profile…</p>
         ) : (
@@ -173,7 +173,7 @@ export default function Profile() {
                 rows={4}
                 placeholder="A short note."
                 onChange={(e) => setBio(e.target.value)}
-                className="w-full rounded-md border border-bloom-border bg-white px-4 py-3 text-bloom-navy outline-none focus:border-bloom-lavender focus:ring-2 focus:ring-bloom-lavender/20"
+                className="w-full rounded-md border border-bloom-border bg-bloom-card px-4 py-3 text-bloom-navy outline-none focus:border-bloom-lavender focus:ring-2 focus:ring-bloom-lavender/20"
               />
               <span className="mt-1.5 block text-right text-xs text-bloom-muted">
                 {bio.length}/{BIO_MAX_LENGTH}

@@ -88,7 +88,7 @@ export default function Progress() {
           <ErrorMessage message={error} />
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Card className="border border-bloom-border bg-white p-5 shadow-sm">
+            <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-bloom-muted">Latest mood</p>
               <div className="mt-3 flex items-center gap-3">
                 {latestMood ? <MoodFace mood={latestMood} className="h-12 w-12" /> : <span className="text-3xl">—</span>}
@@ -98,12 +98,12 @@ export default function Progress() {
                 </div>
               </div>
             </Card>
-            <Card className="border border-bloom-border bg-white p-5 shadow-sm">
+            <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-bloom-muted">Average stress</p>
               <p className="mt-3 text-3xl font-black text-bloom-navy">{averageStress == null ? '—' : averageStress.toFixed(1)}<span className="ml-2 text-sm font-semibold text-bloom-muted">/ 5</span></p>
               <p className="text-xs text-bloom-muted">From {stressValues.length} recent check-ins</p>
             </Card>
-            <Card className="border border-bloom-border bg-white p-5 shadow-sm">
+            <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-bloom-muted">Check-in days</p>
               <p className="mt-3 text-3xl font-black text-bloom-navy">{loggedDays}</p>
               <p className="text-xs text-bloom-muted">Days with a saved entry in the past 30 days</p>
@@ -111,19 +111,19 @@ export default function Progress() {
           </div>
 
           <div className="grid gap-6 xl:grid-cols-2">
-            <Card className="border border-bloom-border bg-white p-5 shadow-sm sm:p-6">
+            <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm sm:p-6">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-bloom-muted">Mood</p>
               <h2 className="mb-3 mt-1 text-xl font-extrabold text-bloom-navy">Past 7 days</h2>
               <MoodChart data={moodData} />
             </Card>
-            <Card className="border border-bloom-border bg-white p-5 shadow-sm sm:p-6">
+            <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm sm:p-6">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-bloom-muted">Stress</p>
               <h2 className="mb-3 mt-1 text-xl font-extrabold text-bloom-navy">Past 7 days</h2>
               <StressChart data={stressData} />
             </Card>
           </div>
 
-          <Card className="border border-bloom-border bg-white p-5 shadow-sm sm:p-6">
+          <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm sm:p-6">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-bloom-muted">History</p>
@@ -137,7 +137,7 @@ export default function Progress() {
               <div className="rounded-2xl bg-bloom-bg/70 px-4 py-8 text-center">
                 <p className="font-semibold text-bloom-navy">No check-ins to show yet</p>
                 <p className="mt-1 text-sm text-bloom-muted">Save a mood and stress check-in to start building your history.</p>
-                <Link to="/mood" className="mt-4 inline-flex rounded-full bg-bloom-lavender px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">Go to Mood & Stress</Link>
+                <Link to="/mood" className="mt-4 inline-flex rounded-full bg-bloom-accent px-5 py-2.5 text-sm font-bold text-white hover:bg-bloom-accent-hover">Go to Mood & Stress</Link>
               </div>
             ) : (
               <div className="overflow-x-auto">

@@ -99,7 +99,7 @@ export default function BreathingExercise({ exercise, onComplete, onExit }) {
         {/* Scales over the length of the current phase. Reduced motion: no scaling, text cues only. */}
         <div
           aria-hidden="true"
-          className={`flex h-40 w-40 items-center justify-center rounded-full bg-white/70 transition-transform ease-in-out motion-reduce:scale-100 motion-reduce:transition-none ${
+          className={`flex h-40 w-40 items-center justify-center rounded-full bg-bloom-card/70 transition-transform ease-in-out motion-reduce:scale-100 motion-reduce:transition-none ${
             expanded ? 'scale-135' : 'scale-100'
           }`}
           style={{ transitionDuration: `${phase.seconds}s` }}
@@ -138,8 +138,8 @@ export default function BreathingExercise({ exercise, onComplete, onExit }) {
                 onClick={() => audio.selectTrack(track.id, { playing: status === 'running' })}
                 className={`rounded-md px-4 py-2 text-sm font-bold ${
                   pressed
-                    ? 'bg-bloom-lavender text-white'
-                    : 'bg-white text-bloom-navy border border-bloom-border'
+                    ? 'bg-bloom-accent text-white'
+                    : 'bg-bloom-card text-bloom-navy border border-bloom-border'
                 }`}
               >
                 {track.name}
@@ -161,8 +161,8 @@ export default function BreathingExercise({ exercise, onComplete, onExit }) {
             onClick={handleVoiceGuide}
             className={`rounded-md px-4 py-2 text-sm font-bold ${
               voice.enabled
-                ? 'bg-bloom-lavender text-white'
-                : 'bg-white text-bloom-navy border border-bloom-border'
+                ? 'bg-bloom-accent text-white'
+                : 'bg-bloom-card text-bloom-navy border border-bloom-border'
             }`}
           >
             Voice guide
@@ -173,8 +173,8 @@ export default function BreathingExercise({ exercise, onComplete, onExit }) {
             onClick={handleAudioOnly}
             className={`rounded-md px-4 py-2 text-sm font-bold ${
               audioOnly
-                ? 'bg-bloom-lavender text-white'
-                : 'bg-white text-bloom-navy border border-bloom-border'
+                ? 'bg-bloom-accent text-white'
+                : 'bg-bloom-card text-bloom-navy border border-bloom-border'
             }`}
           >
             Audio only
