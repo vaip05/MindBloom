@@ -3,7 +3,9 @@ import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
 import Button from '../components/ui/Button'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import JournalNotebook from '../components/JournalNotebook'
+import MoodFace from '../components/MoodFace'
 import { useAuth } from '../context/AuthContext'
+import { getMoodById } from '../lib/constants'
 import { deleteJournalEntry, getJournalEntries } from '../services/firestoreServices'
 
 function entryDate(entry) {
@@ -25,7 +27,7 @@ function formatWhen(date) {
 
 function SectionDropdown({ label, open, onToggle, children }) {
   return (
-    <section className="overflow-hidden rounded-md border border-bloom-border bg-white">
+    <section className="overflow-hidden rounded-md border border-bloom-border bg-bloom-card">
       <button
         type="button"
         aria-expanded={open}
@@ -49,27 +51,36 @@ function EntryList({ entries, empty, onOpen, onDelete }) {
   }
   return (
     <ul className="space-y-3">
-      {entries.map((entry) => (
-        <li key={entry.id} className="rounded-md border border-bloom-border bg-[#fff8ee] px-5 py-4">
-          <button type="button" onClick={() => onOpen(entry)} className="block w-full text-left">
-            <p className="text-xs font-semibold text-[#b08968]">{formatWhen(entryDate(entry))}</p>
-            {entry.kind === 'prompt' && entry.prompt ? (
-              <p className="mt-1 text-sm text-bloom-navy/70 italic">{entry.prompt}</p>
-            ) : null}
-            {entry.kind === 'prompt' && entry.prompt?.startsWith(entry.title) ? null : (
-              <h3 className="mt-1 text-xl font-extrabold text-bloom-navy">{entry.title || 'Untitled'}</h3>
-            )}
-            <p className="mt-1 line-clamp-2 text-sm text-bloom-navy/75">{entry.body}</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(entry)}
-            className="mt-3 text-sm font-bold text-bloom-muted hover:text-bloom-navy"
-          >
-            Delete page
-          </button>
-        </li>
-      ))}
+      {entries.map((entry) => {
+        const mood = entry.kind === 'suggestion' ? getMoodById(entry.moodId) : null
+        return (
+          <li key={entry.id} className="rounded-md border border-bloom-border bg-bloom-paper px-5 py-4">
+            <button type="button" onClick={() => onOpen(entry)} className="block w-full text-left">
+              <p className="text-xs font-semibold text-bloom-paper-ink">{formatWhen(entryDate(entry))}</p>
+              {mood ? (
+                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-bloom-navy">
+                  <MoodFace mood={mood} className="h-5 w-5" />
+                  {mood.label} mood
+                </p>
+              ) : null}
+              {entry.kind === 'prompt' && entry.prompt ? (
+                <p className="mt-1 text-sm text-bloom-navy/70 italic">{entry.prompt}</p>
+              ) : null}
+              {entry.kind === 'prompt' && entry.prompt?.startsWith(entry.title) ? null : (
+                <h3 className="mt-1 text-xl font-extrabold text-bloom-navy">{entry.title || 'Untitled'}</h3>
+              )}
+              <p className="mt-1 line-clamp-2 text-sm text-bloom-navy/75">{entry.body}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(entry)}
+              className="mt-3 text-sm font-bold text-bloom-muted hover:text-bloom-navy"
+            >
+              Delete page
+            </button>
+          </li>
+        )
+      })}
     </ul>
   )
 }

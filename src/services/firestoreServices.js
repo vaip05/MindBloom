@@ -286,10 +286,15 @@ export async function saveReminder(uid, reminder) {
       reminder.id,
     )
 
-    await updateDoc(ref, {
-      ...reminderData,
-      updatedAt: serverTimestamp(),
-    })
+    const existing = await getDoc(ref)
+    if (existing.exists()) {
+      await setDoc(ref, payload, { merge: true })
+    } else {
+      await setDoc(ref, {
+        ...payload,
+        createdAt: serverTimestamp(),
+      })
+    }
 
     return {
       id: reminder.id,
@@ -346,7 +351,10 @@ export async function refreshSuggestions(uid) {
   return suggestions
 }
 
-export async function saveJournalEntry(uid, { id, title, body, kind = 'free', prompt = '' }) {
+export async function saveJournalEntry(
+  uid,
+  { id, title, body, kind = 'free', prompt = '', moodId = '' },
+) {
   const database = requireDb()
   const trimmedPrompt = prompt.trim()
   const payload = {
@@ -359,6 +367,7 @@ export async function saveJournalEntry(uid, { id, title, body, kind = 'free', pr
     updatedAt: serverTimestamp(),
   }
   if (kind === 'prompt' && trimmedPrompt) payload.prompt = trimmedPrompt
+  if (kind === 'suggestion' && moodId) payload.moodId = moodId
   if (id) {
     await updateDoc(doc(database, 'users', uid, 'journalEntries', id), payload)
     return { id, ...payload }

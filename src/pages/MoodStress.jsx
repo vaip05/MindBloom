@@ -70,7 +70,7 @@ export default function MoodStress() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="border border-bloom-border bg-white p-5 shadow-sm sm:p-6">
+        <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm sm:p-6">
           <div className="mb-5">
             <h2 className="text-xl font-extrabold text-bloom-navy">Mood</h2>
             <p className="mt-1 text-sm text-bloom-muted">Choose one of the five.</p>
@@ -79,7 +79,7 @@ export default function MoodStress() {
           <MoodSelector value={selectedMood} onChange={setSelectedMood} />
         </Card>
 
-        <Card className="border border-bloom-border bg-white p-5 shadow-sm sm:p-6">
+        <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-extrabold text-bloom-navy">Stress</h2>
@@ -110,7 +110,7 @@ export default function MoodStress() {
           </div>
         </Card>
 
-        <Card className="border border-bloom-border bg-white p-5 shadow-sm sm:p-6">
+        <Card className="border border-bloom-border bg-bloom-card p-5 shadow-sm sm:p-6">
           <label htmlFor="checkin-note" className="mb-2 block text-lg font-extrabold text-bloom-navy">
             Note (optional)
           </label>

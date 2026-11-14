@@ -28,10 +28,11 @@ export async function requestNotificationPermission() {
   }
 }
 
-export function showWellnessNotification({ title, body, tag }) {
+export function showWellnessNotification({ title, body, tag, reminderId }) {
   const notice = {
     title: title || 'MindBloom reminder',
     body: body || 'Take a moment for yourself today.',
+    reminderId: reminderId || null,
   }
   window.dispatchEvent(new CustomEvent('mindbloom-reminder', { detail: notice }))
 
@@ -78,6 +79,7 @@ export function scheduleReminderNotification(reminder, onFire) {
       title: 'MindBloom wellness reminder',
       body: reminder.message || 'Take a moment for yourself.',
       tag: reminder.id ? `mindbloom-reminder-${reminder.id}` : 'mindbloom-reminder',
+      reminderId: reminder.id || null,
     })
     onFire?.(reminder)
   }

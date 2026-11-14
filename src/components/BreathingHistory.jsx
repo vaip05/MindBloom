@@ -62,14 +62,14 @@ function GoodSessionReason({ session, pending, onSave }) {
           rows={2}
           placeholder="A sentence about what made this session good."
           onChange={(event) => setReason(event.target.value)}
-          className="mt-1 block w-full resize-none rounded-md border border-bloom-border bg-white px-3 py-2 text-sm font-medium text-bloom-navy outline-none focus:border-bloom-lavender"
+          className="mt-1 block w-full resize-none rounded-md border border-bloom-border bg-bloom-card px-3 py-2 text-sm font-medium text-bloom-navy outline-none focus:border-bloom-lavender"
         />
       </label>
       {changed ? (
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 rounded-md bg-white px-4 py-2 text-sm font-bold text-bloom-navy border border-bloom-border disabled:opacity-60"
+          className="mt-2 rounded-md bg-bloom-card px-4 py-2 text-sm font-bold text-bloom-navy border border-bloom-border disabled:opacity-60"
         >
           Save reason
         </button>
@@ -106,7 +106,7 @@ export default function BreathingHistory({
   const goodCount = sessions.filter((session) => session.goodSession).length
 
   return (
-    <section className="rounded-md border border-bloom-border bg-white px-5 py-6 sm:px-7">
+    <section className="rounded-md border border-bloom-border bg-bloom-card px-5 py-6 sm:px-7">
       <p className="text-xs font-bold tracking-[0.18em] text-bloom-lavender uppercase">
         Last 30 days
       </p>
@@ -126,7 +126,7 @@ export default function BreathingHistory({
               onClick={() => setExerciseFilter(exercise.id)}
               className={`rounded-md px-4 py-2 text-sm font-bold transition ${
                 pressed
-                  ? 'bg-bloom-lavender text-white'
+                  ? 'bg-bloom-accent text-white'
                   : 'bg-bloom-bg text-bloom-navy hover:bg-bloom-blue-soft'
               }`}
             >
@@ -143,7 +143,7 @@ export default function BreathingHistory({
             type="date"
             value={startDate}
             onChange={(event) => setStartDate(event.target.value)}
-            className="mt-1 block w-full rounded-md border border-bloom-border bg-white px-3 py-2 text-sm font-medium text-bloom-navy outline-none focus:border-bloom-lavender"
+            className="mt-1 block w-full rounded-md border border-bloom-border bg-bloom-card px-3 py-2 text-sm font-medium text-bloom-navy outline-none focus:border-bloom-lavender"
           />
         </label>
         <label className="block text-sm font-semibold text-bloom-navy">
@@ -152,7 +152,7 @@ export default function BreathingHistory({
             type="date"
             value={endDate}
             onChange={(event) => setEndDate(event.target.value)}
-            className="mt-1 block w-full rounded-md border border-bloom-border bg-white px-3 py-2 text-sm font-medium text-bloom-navy outline-none focus:border-bloom-lavender"
+            className="mt-1 block w-full rounded-md border border-bloom-border bg-bloom-card px-3 py-2 text-sm font-medium text-bloom-navy outline-none focus:border-bloom-lavender"
           />
         </label>
         {startDate || endDate ? (
@@ -215,8 +215,8 @@ export default function BreathingHistory({
                     onClick={() => onToggleGoodSession?.(session)}
                     className={`rounded-md px-4 py-2 text-sm font-bold disabled:opacity-60 ${
                       marked
-                        ? 'bg-bloom-green text-bloom-navy'
-                        : 'bg-white text-bloom-navy border border-bloom-border'
+                        ? 'bg-bloom-green text-bloom-ink'
+                        : 'bg-bloom-card text-bloom-navy border border-bloom-border'
                     }`}
                   >
                     {marked ? 'Good session' : 'Mark good session'}
@@ -225,7 +225,7 @@ export default function BreathingHistory({
                     <button
                       type="button"
                       onClick={() => onRepeat?.(session.exerciseType)}
-                      className="rounded-md bg-white px-4 py-2 text-sm font-bold text-bloom-lavender"
+                      className="rounded-md bg-bloom-card px-4 py-2 text-sm font-bold text-bloom-lavender"
                     >
                       Repeat
                     </button>

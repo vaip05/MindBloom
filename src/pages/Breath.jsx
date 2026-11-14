@@ -174,7 +174,7 @@ export default function Breath() {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedId(exercise.id)}
-                  className={`rounded-md border-2 bg-white px-5 py-5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bloom-lavender ${
+                  className={`rounded-md border-2 bg-bloom-card px-5 py-5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bloom-lavender ${
                     isSelected
                       ? 'border-bloom-lavender'
                       : 'border-bloom-border hover:border-bloom-lavender/50'
@@ -232,7 +232,7 @@ export default function Breath() {
 
       {view === 'complete' && lastSession ? (
         <Card className="flex flex-col items-center bg-bloom-green-soft px-5 py-10 text-center sm:px-7">
-          <div className="flex h-28 w-28 items-center justify-center rounded-md bg-white/80">
+          <div className="flex h-28 w-28 items-center justify-center rounded-md bg-bloom-card/80">
             <FlowerMark className="h-16 w-16" />
           </div>
           <h2 className="mt-6 text-2xl font-extrabold text-bloom-navy">Session finished</h2>
@@ -243,7 +243,7 @@ export default function Breath() {
           {saved ? (
             <p className="mt-3 text-sm font-semibold text-bloom-navy">Saved to your history.</p>
           ) : null}
-          {saveError ? <p className="mt-3 text-sm text-red-600">{saveError}</p> : null}
+          {saveError ? <p className="mt-3 text-sm text-red-600 dark:text-red-300">{saveError}</p> : null}
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
             <Button onClick={() => setView('session')} className="min-w-48">
               Breathe again

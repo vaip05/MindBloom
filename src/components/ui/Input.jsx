@@ -16,8 +16,8 @@ export default function Input({
         </label>
       ) : null}
       <div
-        className={`flex items-center gap-3 rounded-md border bg-white px-4 py-3 transition focus-within:border-bloom-lavender focus-within:ring-2 focus-within:ring-bloom-lavender/20 ${
-          error ? 'border-red-300' : 'border-bloom-border'
+        className={`flex items-center gap-3 rounded-md border bg-bloom-card px-4 py-3 transition focus-within:border-bloom-lavender focus-within:ring-2 focus-within:ring-bloom-lavender/20 ${
+          error ? 'border-red-300 dark:border-red-700' : 'border-bloom-border'
         }`}
       >
         {leftIcon ? <span className="shrink-0 text-bloom-muted">{leftIcon}</span> : null}
@@ -29,7 +29,7 @@ export default function Input({
         />
         {rightSlot ? <span className="shrink-0">{rightSlot}</span> : null}
       </div>
-      {error ? <p className="mt-1.5 text-sm text-red-500">{error}</p> : null}
+      {error ? <p className="mt-1.5 text-sm text-red-500 dark:text-red-300">{error}</p> : null}
     </div>
   )
 }

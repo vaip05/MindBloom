@@ -1,10 +1,13 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "EB Garamond", "Iowan Old Style", Georgia, serif;
 
   --color-bloom-bg: #f8f7f4;
   --color-bloom-navy: #1a1c2e;
+  --color-bloom-ink: #1a1c2e;
   --color-bloom-muted: #6b7280;
   --color-bloom-lavender: #949cf0;
   --color-bloom-lavender-dark: #7b84e8;
@@ -20,6 +23,52 @@
   --color-bloom-blue-soft: #e0f2fe;
   --color-bloom-border: #e8e6e1;
   --color-bloom-card: #ffffff;
+  --color-bloom-paper: #fff8ee;
+  --color-bloom-paper-line: #eadfce;
+  --color-bloom-paper-ink: #b08968;
+  --color-bloom-paper-rule: #e7a3a8;
+  --color-bloom-petal-pink: #f9b4bc;
+  --color-bloom-petal-yellow: #fde68a;
+  --color-bloom-petal-green: #a7f3d0;
+  --color-bloom-petal-lilac: #c4b5fd;
+  --color-bloom-sun: #f6c95c;
+  --color-bloom-hill: #ffd4b8;
+  --color-bloom-sky: #bae6fd;
+  --color-bloom-accent: #949cf0;
+  --color-bloom-accent-hover: #7b84e8;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+  --color-bloom-bg: #262033;
+  --color-bloom-navy: #f6f1e8;
+  --color-bloom-muted: #d4cce2;
+  --color-bloom-lavender: #ddd6fb;
+  --color-bloom-lavender-dark: #efeaff;
+  --color-bloom-pink-soft: #5a424c;
+  --color-bloom-peach-soft: #564432;
+  --color-bloom-yellow-soft: #564830;
+  --color-bloom-green-soft: #3a564c;
+  --color-bloom-blue-soft: #3a5060;
+  --color-bloom-border: #9a94b8;
+  --color-bloom-card: #4a4262;
+  --color-bloom-paper: #685460;
+  --color-bloom-paper-line: #b7a8c0;
+  --color-bloom-paper-ink: #f3ddc4;
+  --color-bloom-paper-rule: #e0a8b2;
+  --color-bloom-petal-pink: #c48490;
+  --color-bloom-petal-yellow: #c4a45a;
+  --color-bloom-petal-green: #6fa888;
+  --color-bloom-petal-lilac: #9086c4;
+  --color-bloom-sun: #d4b15a;
+  --color-bloom-hill: #c49a72;
+  --color-bloom-sky: #8eb4cc;
+  --color-bloom-accent: #5c4d96;
+  --color-bloom-accent-hover: #6e5fb0;
 }
 
 * {
@@ -88,4 +137,26 @@ textarea {
 
 .animate-soft-pulse {
   animation: soft-pulse 3s ease-in-out infinite;
+}
+
+@keyframes garden-sway {
+  0%,
+  100% {
+    transform: rotate(-2.5deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+
+.garden-bloom {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: garden-sway 6.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garden-bloom {
+    animation: none;
+  }
 }

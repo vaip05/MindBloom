@@ -55,12 +55,12 @@ export default function StressChart({ data, height = 260 }) {
               <stop offset="100%" stopColor="#bae6fd" stopOpacity={0.05} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e8e6e1" vertical={false} />
-          <XAxis dataKey="day" tick={{ fill: '#6b7280', fontSize: 12 }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-bloom-border)" vertical={false} syncWithTicks />
+          <XAxis dataKey="day" tick={{ fill: 'var(--color-bloom-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
           <YAxis
-            domain={[1, 5]}
+            domain={[0.7, 5.3]}
             ticks={[1, 2, 3, 4, 5]}
-            tick={{ fill: '#6b7280', fontSize: 12 }}
+            tick={{ fill: 'var(--color-bloom-muted)', fontSize: 12 }}
             axisLine={false}
             tickLine={false}
           />
@@ -68,16 +68,35 @@ export default function StressChart({ data, height = 260 }) {
             formatter={(value) => [value, 'Stress']}
             contentStyle={{
               borderRadius: 16,
-              border: '1px solid #e8e6e1',
+              border: '1px solid var(--color-bloom-border)',
+              backgroundColor: 'var(--color-bloom-card)',
+              color: 'var(--color-bloom-navy)',
             }}
+            labelStyle={{ color: 'var(--color-bloom-navy)' }}
           />
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#7dd3fc"
+            stroke="#38bdf8"
             strokeWidth={3}
             fill="url(#stressFill)"
             connectNulls
+            dot={(props) => {
+              const { cx, cy, payload, index } = props
+              if (payload?.value == null || !Number.isFinite(cx) || !Number.isFinite(cy)) return null
+              return (
+                <circle
+                  key={`stress-dot-${index}`}
+                  cx={cx}
+                  cy={cy}
+                  r={6}
+                  fill="#38bdf8"
+                  stroke="var(--color-bloom-card)"
+                  strokeWidth={2}
+                />
+              )
+            }}
+            activeDot={{ r: 8, fill: '#0ea5e9', stroke: 'var(--color-bloom-card)', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

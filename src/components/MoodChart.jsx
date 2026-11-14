@@ -68,14 +68,14 @@ export default function MoodChart({ data, height = 260 }) {
               <stop offset="100%" stopColor="#bae6fd" stopOpacity={0.1} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e8e6e1" vertical={false} />
-          <XAxis dataKey="day" tick={{ fill: '#6b7280', fontSize: 12 }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-bloom-border)" vertical={false} />
+          <XAxis dataKey="day" tick={{ fill: 'var(--color-bloom-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
           <YAxis
             domain={[1, 5]}
             ticks={[1, 2, 3, 4, 5]}
             tickFormatter={(v) => moodLabels[v] || ''}
             width={72}
-            tick={{ fill: '#6b7280', fontSize: 11 }}
+            tick={{ fill: 'var(--color-bloom-muted)', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
           />
@@ -83,9 +83,12 @@ export default function MoodChart({ data, height = 260 }) {
             formatter={(value) => [moodLabels[value] || value, 'Mood']}
             contentStyle={{
               borderRadius: 16,
-              border: '1px solid #e8e6e1',
+              border: '1px solid var(--color-bloom-border)',
+              backgroundColor: 'var(--color-bloom-card)',
+              color: 'var(--color-bloom-navy)',
               boxShadow: 'none',
             }}
+            labelStyle={{ color: 'var(--color-bloom-navy)' }}
           />
           <Area
             type="monotone"
@@ -103,7 +106,7 @@ export default function MoodChart({ data, height = 260 }) {
             dot={(props) => {
               const { cx, cy, payload } = props
               if (payload.value == null) return null
-              return <circle cx={cx} cy={cy} r={6} fill={payload.color} stroke="#fff" strokeWidth={2} />
+              return <circle cx={cx} cy={cy} r={6} fill={payload.color} stroke="var(--color-bloom-card)" strokeWidth={2} />
             }}
             activeDot={{ r: 7 }}
           />

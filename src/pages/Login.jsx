@@ -59,7 +59,7 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div className="rounded-md border border-bloom-border bg-white px-6 py-8 shadow-sm sm:px-8">
+      <div className="rounded-md border border-bloom-border bg-bloom-card px-6 py-8 shadow-sm sm:px-8">
         <h1 className="text-3xl font-extrabold text-bloom-navy">Sign in</h1>
         <p className="mt-2 text-bloom-navy/80">Use the email on your account.</p>
 
