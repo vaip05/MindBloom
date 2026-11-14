@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuth } from '../context/AuthContext'
+import { ThemeProvider } from '../context/ThemeContext'
 import Register from './Register'
 
 vi.mock('../context/AuthContext', () => ({ useAuth: vi.fn() }))
@@ -23,6 +24,7 @@ function renderRegister(register = vi.fn().mockResolvedValue({ uid: 'user-1' }))
         <Route path="/" element={<p>Home page</p>} />
       </Routes>
     </MemoryRouter>,
+    { wrapper: ThemeProvider },
   )
   return { register, submitButton: container.querySelector('button[type="submit"]') }
 }

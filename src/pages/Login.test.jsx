@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuth } from '../context/AuthContext'
+import { ThemeProvider } from '../context/ThemeContext'
 import Login from './Login'
 
 vi.mock('../context/AuthContext', () => ({ useAuth: vi.fn() }))
@@ -20,6 +21,7 @@ function renderLogin(authOverrides = {}) {
         <Route path="/" element={<p>Home page</p>} />
       </Routes>
     </MemoryRouter>,
+    { wrapper: ThemeProvider },
   )
   return { login }
 }
