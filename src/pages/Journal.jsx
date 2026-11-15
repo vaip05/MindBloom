@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
 import Button from '../components/ui/Button'
 import ErrorMessage from '../components/ui/ErrorMessage'
+import Input from '../components/ui/Input'
 import JournalNotebook from '../components/JournalNotebook'
 import MoodFace from '../components/MoodFace'
 import { useAuth } from '../context/AuthContext'
 import { getMoodById } from '../lib/constants'
+import { createJournalExport, filterJournalEntries } from '../lib/journalEntries'
 import { deleteJournalEntry, getJournalEntries } from '../services/firestoreServices'
 
 function entryDate(entry) {
@@ -92,6 +94,7 @@ export default function Journal() {
   const [error, setError] = useState('')
   const [openEntry, setOpenEntry] = useState(undefined)
   const [openSections, setOpenSections] = useState({})
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     let active = true
@@ -113,6 +116,30 @@ export default function Journal() {
       active = false
     }
   }, [user])
+
+  const filteredEntries = useMemo(
+    () => filterJournalEntries(entries, searchTerm),
+    [entries, searchTerm],
+  )
+  const isSearching = searchTerm.trim().length > 0
+
+  function handleExport() {
+    if (entries.length === 0) return
+
+    try {
+      const file = new Blob([createJournalExport(entries)], { type: 'application/json' })
+      const url = URL.createObjectURL(file)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `mindbloom-journal-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 0)
+    } catch (exportError) {
+      setError(exportError?.message || 'Could not export your journal.')
+    }
+  }
 
   async function handleDelete(entry) {
     if (!user) return
@@ -138,7 +165,12 @@ export default function Journal() {
             Suggestion pages, your own pages, and prompted pages each stay in their own section.
           </p>
         </div>
-        <Button onClick={() => setOpenEntry({ kind: 'free' })}>New page</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={handleExport} disabled={loading || entries.length === 0}>
+            Export journal JSON
+          </Button>
+          <Button onClick={() => setOpenEntry({ kind: 'free' })}>New page</Button>
+        </div>
       </header>
 
       <ErrorMessage message={error} />
@@ -147,16 +179,38 @@ export default function Journal() {
 
       {!loading ? (
         <div className="space-y-3">
+          <div className="rounded-md border border-bloom-border bg-bloom-card p-4">
+            <Input
+              id="journal-search"
+              label="Search journal entries"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by title or body"
+              autoComplete="off"
+            />
+            {isSearching ? (
+              <p className="mt-2 text-sm text-bloom-muted" role="status" aria-live="polite">
+                {filteredEntries.length} matching {filteredEntries.length === 1 ? 'page' : 'pages'}
+              </p>
+            ) : null}
+            {isSearching && filteredEntries.length === 0 ? (
+              <p className="mt-2 text-sm text-bloom-navy/75" role="status">
+                No journal pages match “{searchTerm.trim()}”. Try another title or phrase.
+              </p>
+            ) : null}
+          </div>
+
           <SectionDropdown
             label="From wellness suggestions"
-            open={Boolean(openSections.suggestion)}
+            open={isSearching || Boolean(openSections.suggestion)}
             onToggle={() =>
               setOpenSections((current) => ({ ...current, suggestion: !current.suggestion }))
             }
           >
             <EntryList
-              entries={entries.filter((entry) => entry.kind === 'suggestion')}
-              empty="Pages you save from the notebook on Wellness Suggestions show up here."
+              entries={filteredEntries.filter((entry) => entry.kind === 'suggestion')}
+              empty={isSearching ? 'No matching suggestion pages.' : 'Pages you save from the notebook on Wellness Suggestions show up here.'}
               onOpen={setOpenEntry}
               onDelete={handleDelete}
             />
@@ -164,12 +218,12 @@ export default function Journal() {
 
           <SectionDropdown
             label="Your pages"
-            open={Boolean(openSections.free)}
+            open={isSearching || Boolean(openSections.free)}
             onToggle={() => setOpenSections((current) => ({ ...current, free: !current.free }))}
           >
             <EntryList
-              entries={entries.filter((entry) => entry.kind !== 'suggestion' && entry.kind !== 'prompt')}
-              empty="No pages yet. Start one with New page."
+              entries={filteredEntries.filter((entry) => entry.kind !== 'suggestion' && entry.kind !== 'prompt')}
+              empty={isSearching ? 'No matching personal pages.' : 'No pages yet. Start one with New page.'}
               onOpen={setOpenEntry}
               onDelete={handleDelete}
             />
@@ -177,12 +231,12 @@ export default function Journal() {
 
           <SectionDropdown
             label="Prompted pages"
-            open={Boolean(openSections.prompt)}
+            open={isSearching || Boolean(openSections.prompt)}
             onToggle={() => setOpenSections((current) => ({ ...current, prompt: !current.prompt }))}
           >
             <EntryList
-              entries={entries.filter((entry) => entry.kind === 'prompt')}
-              empty="No prompted pages yet. Open New page and choose a prompt."
+              entries={filteredEntries.filter((entry) => entry.kind === 'prompt')}
+              empty={isSearching ? 'No matching prompted pages.' : 'No prompted pages yet. Open New page and choose a prompt.'}
               onOpen={setOpenEntry}
               onDelete={handleDelete}
             />

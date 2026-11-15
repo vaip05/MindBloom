@@ -58,3 +58,15 @@ Skip index creation until a teammate enables the matching feature.
 - `src/components/BreathingExercise.jsx`
 - `firestore.rules`
 - `firestore.indexes.json`
+
+## Sprint 4 — Xuhang Wu
+
+### PBI-040: Add journal-entry search by title and body
+
+- [x] Add case-insensitive search across all signed-in user's journal titles and bodies
+- [x] Show match counts and a clear no-results state
+
+### PBI-042: Add journal export for personal records
+
+- [x] Export all signed-in user's journal pages as a downloadable JSON file
+- [x] Preserve page type, prompt/mood metadata, content, and timestamps
