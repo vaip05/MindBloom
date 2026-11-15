@@ -435,7 +435,17 @@ export async function saveJournalEntry(
 }
 
 export async function getJournalEntries(uid) {
-  return listByUser('journalEntries', uid, 40)
+  const database = requireDb()
+  const journalQuery = query(
+    userCollection(database, uid, 'journalEntries'),
+    orderBy('createdAt', 'desc'),
+  )
+  const snapshot = await getDocs(journalQuery)
+
+  return snapshot.docs.map((entry) => ({
+    id: entry.id,
+    ...entry.data(),
+  }))
 }
 
 export async function deleteJournalEntry(uid, entryId) {
