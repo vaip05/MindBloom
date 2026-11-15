@@ -75,9 +75,9 @@ export function scheduleReminderNotification(reminder, onFire) {
   if (!reminder?.enabled || !target) return () => {}
 
   const deliver = () => {
-    showWellnessNotification({
-      title: 'MindBloom wellness reminder',
-      body: reminder.message || 'Take a moment for yourself.',
+      showWellnessNotification({
+        title: 'MindBloom wellness reminder',
+        body: 'Take a moment for yourself.',
       tag: reminder.id ? `mindbloom-reminder-${reminder.id}` : 'mindbloom-reminder',
       reminderId: reminder.id || null,
     })

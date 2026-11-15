@@ -6,6 +6,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import ErrorMessage from '../components/ui/ErrorMessage'
+import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { useAuth } from '../context/AuthContext'
 import { deleteReminder, saveReminder } from '../services/firestoreServices'
 import { reminderDateTime, requestNotificationPermission, todayDateInput } from '../lib/notifications'
@@ -192,6 +193,8 @@ export default function Reminders() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [now, setNow] = useState(() => Date.now())
   const clearedIds = useRef(new Set())
 
@@ -209,6 +212,8 @@ export default function Reminders() {
   useEffect(() => {
     let active = true
     async function load() {
+      setLoading(true)
+      setLoadError('')
       try {
         const saved = await syncReminderSchedule(user.uid)
         const items = saved.map(fromSaved)
@@ -225,7 +230,7 @@ export default function Reminders() {
         if (!active) return
         setReminders(visible)
       } catch (loadError) {
-        if (active) setError(loadError?.message || 'Unable to load reminders.')
+        if (active) setLoadError(loadError?.message || 'Unable to load reminders.')
       } finally {
         if (active) setLoading(false)
       }
@@ -234,7 +239,7 @@ export default function Reminders() {
     return () => {
       active = false
     }
-  }, [user.uid])
+  }, [user.uid, loadAttempt])
 
   useEffect(() => {
     if (!user) return undefined
@@ -374,6 +379,9 @@ export default function Reminders() {
           <p className="mt-2 max-w-2xl text-bloom-navy/80">
             Leave a note in the garden. It arrives as a browser notification at the time you choose, while this tab is open.
           </p>
+          <p className="mt-2 max-w-2xl text-sm text-bloom-muted">
+            Notifications use a general message so personal reminder text is not exposed on your lock screen.
+          </p>
         </div>
         <button
           type="button"
@@ -392,8 +400,15 @@ export default function Reminders() {
         </div>
       ) : null}
 
-      {loading ? (
-        <p className="text-sm text-bloom-muted">Loading your reminders…</p>
+      {loadError ? (
+        <Card className="border border-bloom-border bg-bloom-card p-6">
+          <ErrorMessage message={loadError} />
+          <Button className="mt-4" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+            Try loading again
+          </Button>
+        </Card>
+      ) : loading ? (
+        <LoadingSpinner label="Loading your reminders…" />
       ) : reminders.length === 0 ? (
         <Card className="overflow-hidden border border-bloom-border bg-bloom-card sm:grid sm:grid-cols-[280px_minmax(0,1fr)]">
           <GardenSky className={`h-full ${DAY_SKY}`}>
