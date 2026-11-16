@@ -85,7 +85,7 @@ async function sendReminder(reminderSnapshot) {
     tokens: tokens.map((item) => item.token),
     data: {
       title: 'MindBloom wellness reminder',
-      body: 'Take a moment for yourself.',
+      body: reminder.message || 'Take a moment for yourself.',
       tag: `mindbloom-reminder-${reminderSnapshot.id}`,
       reminderId: reminderSnapshot.id,
       link: `${SITE_URL}/reminders`,
