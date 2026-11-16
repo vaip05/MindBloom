@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing'
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore'
+import { collection, deleteField, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore'
 
 const projectId = 'demo-mindbloom-security'
 let testEnvironment
@@ -138,6 +138,7 @@ test('owners can write valid reminder, suggestion, breathing, and profile data',
     enabled: true,
     date: '2026-11-14',
     time: '09:30',
+    timezone: 'America/Los_Angeles',
     message: 'A private reminder',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -168,4 +169,36 @@ test('breathing updates may only change the good-session marker', async () => {
   const sessionRef = doc(alice, 'users/alice/breathingSessions/session-1')
 
   await assertFails(setDoc(sessionRef, { exerciseType: 'altered' }, { merge: true }))
+})
+test('owners can record and clear reminder delivery, but only with valid values', async () => {
+  const alice = testEnvironment.authenticatedContext('alice').firestore()
+  const reminderRef = doc(alice, 'users/alice/reminders/delivery')
+  await assertSucceeds(setDoc(reminderRef, {
+    uid: 'alice',
+    enabled: true,
+    date: '2026-11-15',
+    time: '21:30',
+    timezone: 'America/Los_Angeles',
+    message: 'Stretch',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }))
+
+  await assertSucceeds(updateDoc(reminderRef, {
+    deliveryStatus: 'sent',
+    lastSentFor: '2026-11-15T21:30',
+    lastSentAt: new Date(),
+  }))
+  await assertSucceeds(updateDoc(reminderRef, {
+    date: '2026-11-16',
+    deliveryStatus: deleteField(),
+    deliveryNote: deleteField(),
+  }))
+
+  await assertFails(updateDoc(reminderRef, { deliveryStatus: 'delivered-twice' }))
+  await assertFails(updateDoc(reminderRef, { deliveryNote: 'x'.repeat(121) }))
+  await assertFails(updateDoc(reminderRef, { lastSentAt: 'yesterday' }))
+
+  const bob = testEnvironment.authenticatedContext('bob').firestore()
+  await assertFails(updateDoc(doc(bob, 'users/alice/reminders/delivery'), { deliveryStatus: 'sent' }))
 })

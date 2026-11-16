@@ -7,6 +7,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -21,6 +22,7 @@ import { db, isFirebaseConfigured } from '../lib/firebase'
 import { DEFAULT_AVATAR } from '../lib/constants'
 import { buildSuggestions } from '../lib/suggestions'
 import { calculateWellnessAverages } from '../lib/wellnessAverages'
+import { occurrenceKey } from '../lib/reminderDelivery'
 
 function requireDb() {
   if (!isFirebaseConfigured || !db) {
@@ -301,7 +303,12 @@ export async function saveReminder(uid, reminder) {
 
     const existing = await getDoc(ref)
     if (existing.exists()) {
-      await setDoc(ref, payload, { merge: true })
+      // Saving a reminder again (for example to reschedule a missed one) starts its delivery over.
+      await setDoc(
+        ref,
+        { ...payload, deliveryStatus: deleteField(), deliveryNote: deleteField() },
+        { merge: true },
+      )
     } else {
       await setDoc(ref, {
         ...payload,
@@ -354,6 +361,15 @@ export async function saveNotificationToken(uid, token) {
 
 export async function deleteNotificationToken(uid, tokenId) {
   await deleteDoc(doc(requireDb(), 'users', uid, 'notificationTokens', tokenId))
+}
+
+/** Records that an open tab delivered this reminder, so the server check skips it. */
+export async function markReminderSent(uid, reminder) {
+  await updateDoc(doc(requireDb(), 'users', uid, 'reminders', reminder.id), {
+    deliveryStatus: 'sent',
+    lastSentFor: occurrenceKey(reminder),
+    lastSentAt: serverTimestamp(),
+  })
 }
 
 export async function deleteReminder(uid, reminderId) {

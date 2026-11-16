@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
 import Minus from 'lucide-react/dist/esm/icons/minus.mjs'
 import Plus from 'lucide-react/dist/esm/icons/plus.mjs'
@@ -8,8 +8,9 @@ import Input from '../components/ui/Input'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { useAuth } from '../context/AuthContext'
-import { deleteReminder, saveReminder } from '../services/firestoreServices'
+import { deleteReminder, getReminders, saveReminder } from '../services/firestoreServices'
 import { reminderDateTime, registerPushNotifications, todayDateInput } from '../lib/notifications'
+import { SEND_WINDOW_MINUTES } from '../lib/reminderDelivery'
 import { syncReminderSchedule } from '../lib/reminderSchedule'
 
 const MESSAGE_MAX = 180
@@ -47,12 +48,6 @@ function reminderWhen(date, time) {
   }
 }
 
-function hasGoneOut(reminder, now) {
-  if (!reminder.id || !reminder.enabled) return false
-  const when = reminderDateTime(reminder)
-  return Boolean(when && when.getTime() <= now - 2_000)
-}
-
 function savedSettings(reminder) {
   return {
     date: reminder.date,
@@ -75,11 +70,24 @@ function isUnchanged(reminder) {
 }
 
 function reminderStatus(reminder, now) {
+  // While the date or time is being edited, judge the new values instead of the old delivery.
+  const editing = !isUnchanged(reminder)
+  if (!editing && reminder.deliveryStatus === 'sent') return 'sent'
+  if (!editing && reminder.deliveryStatus === 'missed') return 'missed'
   const when = reminderDateTime(reminder)
   const passed = Boolean(when && when.getTime() < now - 60_000)
-  if (passed && !reminder.id) return 'expired'
+  if (passed && editing) return 'expired'
   if (!reminder.enabled) return passed ? 'missed' : 'paused'
-  return 'waiting'
+  if (!passed) return 'waiting'
+  // Past due with no word from the server yet. After the send window it can no longer go out.
+  return when.getTime() < now - SEND_WINDOW_MINUTES * 60_000 ? 'missed' : 'sending'
+}
+
+function missedDetail(reminder) {
+  if (reminder.deliveryNote) return reminder.deliveryNote
+  return reminder.enabled
+    ? 'This reminder was not delivered in time.'
+    : 'This time passed while the reminder was off.'
 }
 
 const STATUS = {
@@ -93,9 +101,19 @@ const STATUS = {
     detail: 'This sprout stays quiet until you turn it on.',
     sky: DAY_SKY,
   },
+  sending: {
+    label: 'Sending…',
+    detail: 'Your note is on its way.',
+    sky: DAY_SKY,
+  },
+  sent: {
+    label: 'Sent',
+    detail: 'This note was delivered.',
+    sky: DAY_SKY,
+  },
   missed: {
-    label: 'Not sent',
-    detail: 'This time passed while the reminder was off.',
+    label: 'Missed',
+    detail: 'This reminder was not delivered in time.',
     sky: DAY_SKY,
   },
   expired: {
@@ -123,7 +141,7 @@ function PlotDrawing({ status, color }) {
       <ellipse cx="160" cy="158" rx="168" ry="20" fill="#C5E0C2" />
       <ellipse cx="160" cy="164" rx="130" ry="14" fill="#DDECD7" />
       <g transform="translate(160 144)">
-        {status === 'waiting' ? <Bloom color={color} /> : <Sprout />}
+        {['waiting', 'sending', 'sent'].includes(status) ? <Bloom color={color} /> : <Sprout />}
       </g>
     </svg>
   )
@@ -184,6 +202,8 @@ function fromSaved(reminder) {
     message,
     enabled,
     timezone,
+    deliveryStatus: reminder.deliveryStatus || null,
+    deliveryNote: reminder.deliveryNote || '',
     saving: false,
     saved: { date, time, message, enabled },
     open: false,
@@ -199,7 +219,6 @@ export default function Reminders() {
   const [loadError, setLoadError] = useState('')
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [now, setNow] = useState(() => Date.now())
-  const clearedIds = useRef(new Set())
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 2_000)
@@ -219,19 +238,8 @@ export default function Reminders() {
       setLoadError('')
       try {
         const saved = await syncReminderSchedule(user.uid)
-        const items = saved.map(fromSaved)
-        const sent = items.filter(
-          (item) => hasGoneOut(item, Date.now()) || clearedIds.current.has(item.id),
-        )
-        const visible = items.filter(
-          (item) => !hasGoneOut(item, Date.now()) && !clearedIds.current.has(item.id),
-        )
-        if (sent.length > 0) {
-          await Promise.all(sent.map((item) => deleteReminder(user.uid, item.id)))
-          await syncReminderSchedule(user.uid)
-        }
         if (!active) return
-        setReminders(visible)
+        setReminders(saved.map(fromSaved))
       } catch (loadError) {
         if (active) setLoadError(loadError?.message || 'Unable to load reminders.')
       } finally {
@@ -244,38 +252,42 @@ export default function Reminders() {
     }
   }, [user.uid, loadAttempt])
 
+  // This tab delivered a reminder (reminderSchedule records it in Firestore).
   useEffect(() => {
-    if (!user) return undefined
     function onSent(event) {
       const id = event.detail?.reminderId
-      if (!id || clearedIds.current.has(id)) return
-      clearedIds.current.add(id)
-      setReminders((current) => current.filter((reminder) => reminder.id !== id))
-      deleteReminder(user.uid, id)
-        .then(() => syncReminderSchedule(user.uid))
-        .catch((clearError) => {
-          setError(clearError?.message || 'Unable to clear a sent reminder.')
-        })
+      if (!id) return
+      setReminders((current) =>
+        current.map((reminder) =>
+          reminder.id === id ? { ...reminder, deliveryStatus: 'sent', deliveryNote: '' } : reminder,
+        ),
+      )
     }
     window.addEventListener('mindbloom-reminder', onSent)
     return () => window.removeEventListener('mindbloom-reminder', onSent)
-  }, [user])
+  }, [])
 
+  // While a reminder is past due, check once a minute whether the server sent it or marked it missed.
+  const awaitingServer = reminders.some((reminder) => reminderStatus(reminder, now) === 'sending')
   useEffect(() => {
-    if (loading || !user) return
-    const sent = reminders.filter(
-      (reminder) => hasGoneOut(reminder, now) && !clearedIds.current.has(reminder.id),
-    )
-    if (sent.length === 0) return
-    sent.forEach((reminder) => clearedIds.current.add(reminder.id))
-    const ids = new Set(sent.map((reminder) => reminder.id))
-    setReminders((current) => current.filter((reminder) => !ids.has(reminder.id)))
-    Promise.all(sent.map((reminder) => deleteReminder(user.uid, reminder.id)))
-      .then(() => syncReminderSchedule(user.uid))
-      .catch((clearError) => {
-        setError(clearError?.message || 'Unable to clear a sent reminder.')
-      })
-  }, [loading, now, reminders, user])
+    if (!awaitingServer) return undefined
+    const id = window.setInterval(async () => {
+      try {
+        const saved = new Map((await getReminders(user.uid)).map((item) => [item.id, item]))
+        setReminders((current) =>
+          current.map((reminder) => {
+            const latest = saved.get(reminder.id)
+            return latest?.deliveryStatus
+              ? { ...reminder, deliveryStatus: latest.deliveryStatus, deliveryNote: latest.deliveryNote || '' }
+              : reminder
+          }),
+        )
+      } catch {
+        // Try again on the next minute.
+      }
+    }, 60_000)
+    return () => window.clearInterval(id)
+  }, [awaitingServer, user.uid])
 
   function updateReminder(key, patch) {
     setReminders((current) =>
@@ -360,6 +372,8 @@ export default function Reminders() {
         key: saved.id,
         message: trimmed,
         timezone,
+        deliveryStatus: null,
+        deliveryNote: '',
         saving: false,
         open: reminder.enabled ? false : reminder.open,
         saved: {
@@ -439,7 +453,7 @@ export default function Reminders() {
           const when = reminderWhen(reminder.date, reminder.time)
           const tone = reminderStatus(reminder, now)
           const status = STATUS[tone]
-          const saveLocked = tone === 'waiting' && Boolean(reminder.id) && isUnchanged(reminder)
+          const saveLocked = Boolean(reminder.id) && isUnchanged(reminder)
           const expanded = reminder.open !== false
           return (
             <Card
@@ -484,7 +498,23 @@ export default function Reminders() {
                     <p className="text-xs font-bold tracking-[0.16em] text-bloom-navy uppercase">
                       Note {index + 1}
                     </p>
-                    <p className="mt-1 text-sm text-bloom-navy/75">{status.detail}</p>
+                    <p className="mt-1 text-sm text-bloom-navy/75">
+                      {tone === 'missed' ? missedDetail(reminder) : status.detail}
+                    </p>
+                    {tone === 'missed' ? (
+                      <p className="mt-1 text-sm text-bloom-navy/75">
+                        Choose a new date and time below to reschedule it, or{' '}
+                        <button
+                          type="button"
+                          onClick={() => removeReminder(reminder)}
+                          disabled={reminder.saving}
+                          className="font-bold text-bloom-lavender underline"
+                        >
+                          dismiss it
+                        </button>
+                        .
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 gap-2">
                     {reminder.id ? (
