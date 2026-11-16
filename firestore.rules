@@ -59,7 +59,7 @@ service cloud.firestore {
     }
 
     function validReminder(data, userId) {
-      return data.keys().hasOnly(['uid', 'enabled', 'date', 'time', 'timezone', 'message', 'createdAt', 'updatedAt', 'lastSentFor', 'lastSentAt'])
+      return data.keys().hasOnly(['uid', 'enabled', 'date', 'time', 'timezone', 'message', 'createdAt', 'updatedAt', 'lastSentFor', 'lastSentAt', 'deliveryStatus', 'deliveryNote'])
         && data.uid == userId
         && data.enabled is bool
         && data.date is string
@@ -72,7 +72,11 @@ service cloud.firestore {
         && data.message.size() > 0
         && data.message.size() <= 180
         && (!('createdAt' in data) || data.createdAt is timestamp)
-        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+        && (!('updatedAt' in data) || data.updatedAt is timestamp)
+        && (!('lastSentFor' in data) || (data.lastSentFor is string && data.lastSentFor.size() <= 20))
+        && (!('lastSentAt' in data) || data.lastSentAt is timestamp)
+        && (!('deliveryStatus' in data) || data.deliveryStatus in ['sent', 'missed'])
+        && (!('deliveryNote' in data) || (data.deliveryNote is string && data.deliveryNote.size() <= 120));
     }
 
     function validNotificationToken(data, userId) {
@@ -173,7 +177,7 @@ service cloud.firestore {
         allow read, delete: if isOwner(userId);
         allow create: if isOwner(userId) && validReminder(request.resource.data, userId);
         allow update: if isOwner(userId)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['enabled', 'date', 'time', 'timezone', 'message', 'updatedAt'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['enabled', 'date', 'time', 'timezone', 'message', 'updatedAt', 'deliveryStatus', 'deliveryNote', 'lastSentFor', 'lastSentAt'])
           && validReminder(request.resource.data, userId);
       }
 
