@@ -1,3 +1,68 @@
+import { getMessaging, getToken, isSupported } from 'firebase/messaging'
+import { app } from './firebase'
+import { saveNotificationToken } from '../services/firestoreServices'
+
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY
+
+let messagingPromise
+
+async function getBrowserMessaging() {
+  if (!app || !VAPID_KEY || typeof window === 'undefined') return null
+  if (!messagingPromise) {
+    messagingPromise = isSupported()
+      .then((supported) => (supported ? getMessaging(app) : null))
+      .catch(() => null)
+  }
+  return messagingPromise
+}
+
+async function getMessagingServiceWorker() {
+  if (!('serviceWorker' in navigator)) return null
+
+  const registration = await navigator.serviceWorker.register(
+    '/firebase-messaging-sw.js',
+    { updateViaCache: 'none' },
+  )
+
+  await navigator.serviceWorker.ready
+
+  return registration
+}
+
+export async function registerPushNotifications(uid) {
+  const permission = await requestNotificationPermission()
+  if (!permission.granted) return permission
+
+  if (!uid) {
+    return { granted: false, message: 'Sign in before enabling reminders.' }
+  }
+
+  if (!VAPID_KEY) {
+    return {
+      granted: false,
+      message: 'Web push is not configured yet. Add VITE_FIREBASE_VAPID_KEY to .env.',
+    }
+  }
+
+  const messaging = await getBrowserMessaging()
+  if (!messaging) {
+    return { granted: false, message: 'This browser cannot receive background notifications.' }
+  }
+
+  const serviceWorkerRegistration = await getMessagingServiceWorker()
+  const token = await getToken(messaging, {
+    vapidKey: VAPID_KEY,
+    serviceWorkerRegistration,
+  })
+
+  if (!token) {
+    return { granted: false, message: 'Could not register this browser for reminders.' }
+  }
+
+  await saveNotificationToken(uid, token)
+  return { granted: true, message: 'Notifications enabled for this browser.' }
+}
+
 export function notificationsSupported() {
   return typeof window !== 'undefined' && 'Notification' in window
 }

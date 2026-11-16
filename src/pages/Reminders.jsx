@@ -9,7 +9,7 @@ import ErrorMessage from '../components/ui/ErrorMessage'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import { useAuth } from '../context/AuthContext'
 import { deleteReminder, saveReminder } from '../services/firestoreServices'
-import { reminderDateTime, requestNotificationPermission, todayDateInput } from '../lib/notifications'
+import { reminderDateTime, registerPushNotifications, todayDateInput } from '../lib/notifications'
 import { syncReminderSchedule } from '../lib/reminderSchedule'
 
 const MESSAGE_MAX = 180
@@ -59,6 +59,7 @@ function savedSettings(reminder) {
     time: reminder.time,
     message: reminder.message,
     enabled: Boolean(reminder.enabled),
+    timezone: reminder.timezone,
   }
 }
 
@@ -174,6 +175,7 @@ function fromSaved(reminder) {
   const time = reminder.time || '20:00'
   const message = reminder.message || DEFAULT_MESSAGE
   const enabled = Boolean(reminder.enabled)
+  const timezone = reminder.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
   return {
     key: reminder.id,
     id: reminder.id,
@@ -181,6 +183,7 @@ function fromSaved(reminder) {
     time,
     message,
     enabled,
+    timezone,
     saving: false,
     saved: { date, time, message, enabled },
     open: false,
@@ -340,20 +343,23 @@ export default function Reminders() {
     try {
       let permissionNote = ''
       if (reminder.enabled) {
-        const permission = await requestNotificationPermission()
+        const permission = await registerPushNotifications(user.uid)
         permissionNote = permission.message
       }
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
       const saved = await saveReminder(user.uid, {
         id: reminder.id,
         enabled: reminder.enabled,
         date: reminder.date,
         time: reminder.time,
         message: trimmed,
+        timezone,
       })
       updateReminder(reminder.key, {
         id: saved.id,
         key: saved.id,
         message: trimmed,
+        timezone,
         saving: false,
         open: reminder.enabled ? false : reminder.open,
         saved: {
@@ -361,6 +367,7 @@ export default function Reminders() {
           time: reminder.time,
           message: trimmed,
           enabled: reminder.enabled,
+          timezone,
         },
       })
       await syncReminderSchedule(user.uid)
@@ -377,7 +384,7 @@ export default function Reminders() {
         <div>
           <h1 className="text-3xl font-extrabold text-bloom-navy">Daily Reminders</h1>
           <p className="mt-2 max-w-2xl text-bloom-navy/80">
-            Leave a note in the garden. It arrives as a browser notification at the time you choose, while this tab is open.
+            Leave a note in the garden. It arrives as a browser notification at the time you choose, even when this tab is closed.
           </p>
           <p className="mt-2 max-w-2xl text-sm text-bloom-muted">
             Notifications use a general message so personal reminder text is not exposed on your lock screen.

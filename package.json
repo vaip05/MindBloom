@@ -13,6 +13,7 @@
     "test:security": "firebase emulators:exec --only firestore --project demo-mindbloom-security \"node --test tests/firestore.rules.test.js\""
   },
   "dependencies": {
+    "firebase-admin": "^13.6.0",
     "firebase": "^12.19.0",
     "lucide-react": "^1.51.0",
     "react": "^19.2.8",

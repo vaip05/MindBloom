@@ -265,6 +265,10 @@ export async function saveReminder(uid, reminder) {
     enabled: Boolean(reminder.enabled),
     date: reminder.date,
     time: reminder.time,
+    timezone:
+      reminder.timezone ||
+      Intl.DateTimeFormat().resolvedOptions().timeZone ||
+      'UTC',
     message:
       reminder.message || 'Take a moment for yourself.',
   }
@@ -327,6 +331,29 @@ export async function saveReminder(uid, reminder) {
 
 export async function getReminders(uid) {
   return listByUser('reminders', uid, 20)
+}
+
+export async function saveNotificationToken(uid, token) {
+  const database = requireDb()
+  const tokenId = token.replace(/[^A-Za-z0-9_-]/g, '_')
+  const ref = doc(database, 'users', uid, 'notificationTokens', tokenId)
+
+  await setDoc(
+    ref,
+    {
+      uid,
+      token,
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
+
+  return tokenId
+}
+
+export async function deleteNotificationToken(uid, tokenId) {
+  await deleteDoc(doc(requireDb(), 'users', uid, 'notificationTokens', tokenId))
 }
 
 export async function deleteReminder(uid, reminderId) {
