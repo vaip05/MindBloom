@@ -142,7 +142,7 @@ export function scheduleReminderNotification(reminder, onFire) {
   const deliver = () => {
       showWellnessNotification({
         title: 'MindBloom wellness reminder',
-        body: 'Take a moment for yourself.',
+        body: reminder.message || 'Take a moment for yourself.',
       tag: reminder.id ? `mindbloom-reminder-${reminder.id}` : 'mindbloom-reminder',
       reminderId: reminder.id || null,
     })
